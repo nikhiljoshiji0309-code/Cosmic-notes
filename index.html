@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nexus Sovereign | Debug Mode</title>
-    
+   
     <!-- ✅ Correct script URLs (no spaces) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-
     <style>
         :root {
             --theme-bg: #03030b;
@@ -27,7 +26,6 @@
             --theme-away: #ffbb00;
             --theme-offline: #555;
         }
-
         .light-theme {
             --theme-bg: #f8f9fa;
             --theme-panel: #ffffff;
@@ -43,7 +41,6 @@
             --theme-away: #ff9800;
             --theme-offline: #999999;
         }
-
         * { box-sizing: border-box; outline: none; }
         body, html {
             margin: 0; padding: 0;
@@ -54,24 +51,20 @@
             overflow: hidden;
             transition: background 0.3s ease;
         }
-
         #star-canvas {
             position: fixed; inset: 0; z-index: 0;
             pointer-events: none;
             display: block;
         }
         .light-theme #star-canvas { display: none; }
-
         #progress-bar {
             position: fixed; top: 0; left: 0; height: 3px;
             background: linear-gradient(90deg, transparent, var(--theme-accent), transparent);
             width: 0%; transition: width 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1);
             z-index: 5000; box-shadow: 0 0 10px var(--theme-accent);
         }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
         #auth-gate {
             position: fixed; inset: 0; z-index: 4000;
             background: var(--theme-bg); display: flex;
@@ -83,7 +76,6 @@
             letter-spacing: 20px; text-shadow: 0 0 30px var(--theme-accent);
             margin-bottom: 10px; animation: fadeIn 2s ease;
         }
-
         #identity-lock {
             position: fixed; inset: 0; z-index: 3000;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
@@ -95,13 +87,11 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: slideUp 0.5s ease;
             color: var(--theme-text);
         }
-
         .nexus-wrapper {
             display: none; height: 100vh; width: 100vw;
             position: relative; z-index: 10; flex-direction: row;
             animation: fadeIn 1s ease;
         }
-
         .sidebar {
             width: 80px; background: var(--theme-panel);
             border-right: 1px solid var(--theme-border);
@@ -110,42 +100,38 @@
             z-index: 100; transition: width 0.3s ease;
         }
         .sidebar.expanded { width: 280px; }
-        .sidebar-icon { 
-            width: 44px; height: 44px; display: flex; align-items: center; 
+        .sidebar-icon {
+            width: 44px; height: 44px; display: flex; align-items: center;
             justify-content: center; margin: 12px 0; border-radius: 50%;
             cursor: pointer; font-size: 1.4rem; color: var(--theme-text-dim);
             transition: all 0.2s;
         }
-        .sidebar-icon.active, .sidebar-icon:hover { 
-            background: var(--theme-accent-glow); 
-            color: var(--theme-accent); 
+        .sidebar-icon.active, .sidebar-icon:hover {
+            background: var(--theme-accent-glow);
+            color: var(--theme-accent);
         }
-        .sidebar-label { 
-            opacity: 0; visibility: hidden; margin-left: 15px; 
+        .sidebar-label {
+            opacity: 0; visibility: hidden; margin-left: 15px;
             white-space: nowrap; font-size: 0.95rem;
         }
-        .sidebar.expanded .sidebar-label { 
-            opacity: 1; visibility: visible; 
+        .sidebar.expanded .sidebar-label {
+            opacity: 1; visibility: visible;
         }
-
         .main-stage {
             flex: 1; display: flex; flex-direction: column;
             background: var(--theme-panel); position: relative;
         }
-
         .stage-header {
-            padding: 12px 25px; 
+            padding: 12px 25px;
             display: flex; align-items: center; justify-content: space-between;
             border-bottom: 1px solid var(--theme-border); height: 70px;
             background: var(--theme-panel);
         }
-
         .message-viewport {
             flex: 1; overflow-y: auto; padding: 30px;
             display: flex; flex-direction: column; gap: 12px;
             background-attachment: fixed;
         }
-
         .msg-bubble {
             max-width: 65%; padding: 10px 15px; border-radius: 15px;
             font-size: 0.95rem; line-height: 1.5; position: relative;
@@ -167,7 +153,6 @@
             font-size: 0.65rem; opacity: 0.6; margin-top: 5px;
             text-align: right; font-weight: 600;
         }
-
         .input-bar {
             padding: 10px 20px; background: var(--theme-panel);
             display: flex; align-items: center; gap: 15px;
@@ -182,26 +167,22 @@
             border-radius: 25px; color: var(--theme-text); font-size: 0.95rem;
         }
         .light-theme .main-input { background: #f0f0f0; }
-
         .content-view {
             display: none; flex-direction: column; height: 100%;
             padding: 20px;
         }
         .content-view.active { display: flex; }
-
         .publish-box {
             background: var(--theme-panel); padding: 25px; border-radius: 20px;
             border: 1px solid var(--theme-border); margin-bottom: 30px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
-
         .post-card {
             background: var(--theme-panel); padding: 20px; border-radius: 18px;
             border: 1px solid var(--theme-border); margin-bottom: 20px;
             transition: 0.2s;
         }
         .post-card:hover { border-color: var(--theme-accent); }
-
         .avatar-circle {
             width: 44px; height: 44px; border-radius: 50%;
             background: #333; display: flex; align-items: center;
@@ -211,7 +192,6 @@
         .avatar-circle img {
             width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
         }
-
         .dot {
             width: 8px; height: 8px; border-radius: 50%; display: inline-block;
             margin-right: 6px;
@@ -219,7 +199,6 @@
         .online { background: var(--theme-online); box-shadow: 0 0 6px var(--theme-online); }
         .away { background: var(--theme-away); box-shadow: 0 0 6px var(--theme-away); }
         .offline { background: var(--theme-offline); }
-
         .btn-primary {
             background: var(--theme-accent); color: #000; font-weight: bold;
             padding: 12px; border-radius: 50px; border: none; cursor: pointer;
@@ -229,7 +208,6 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px var(--theme-accent-glow);
         }
-
         input[type="text"], textarea, select {
             width: 100%; padding: 12px; background: rgba(0,0,0,0.05);
             border: 1px solid var(--theme-border); color: var(--theme-text);
@@ -239,46 +217,56 @@
         .light-theme input, .light-theme textarea {
             background: #f5f5f5;
         }
-
+        /* Improved mobile CSS */
         @media (max-width: 768px) {
             .sidebar { width: 60px; }
             .sidebar.expanded { width: 260px; }
+            .msg-bubble { max-width: 85%; }
+            .msg-image { max-width: min(80vw, 300px); }
+            .stage-header { padding: 12px 15px; }
+            .message-viewport { padding: 15px; }
         }
+        /* Loading spinner */
+        .loading-spinner {
+            border: 4px solid var(--theme-border);
+            border-top: 4px solid var(--theme-accent);
+            border-radius: 50%;
+            width: 24px; height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
 <div id="progress-bar"></div>
 <canvas id="star-canvas"></canvas>
-
 <div id="auth-gate">
     <div class="gate-logo">NEXUS</div>
     <p style="color:var(--theme-text-dim); margin-bottom:30px; letter-spacing:2px;">SOVEREIGN OMNIA PROTOCOL</p>
     <button class="btn-primary" style="width:250px;" onclick="handleLogin()">INITIALIZE SYNC</button>
 </div>
-
 <div id="identity-lock">
     <div class="lock-box">
         <h2 style="color:var(--theme-accent); margin:0 0 10px 0;">PILOT CREDENTIALS</h2>
         <p style="color:var(--theme-text-dim); font-size:0.85rem; margin-bottom:20px;">Identity setup is mandatory.</p>
-        
+       
         <label style="font-size:0.75rem; color:var(--theme-accent);">PILOT CALLSIGN</label>
         <input type="text" id="pilot-name" placeholder="e.g. Ghost_One">
-        
+       
         <label style="font-size:0.75rem; color:var(--theme-accent); margin-top:12px; display:block;">STATUS</label>
         <select id="pilot-status">
             <option value="online">🟢 Online</option>
             <option value="away">🟡 Away</option>
             <option value="offline">⚪ Offline</option>
         </select>
-        
+       
         <label style="font-size:0.75rem; color:var(--theme-accent); margin-top:12px; display:block;">MISSION BIO</label>
         <textarea id="pilot-bio" maxlength="100" placeholder="Describe your mission..."></textarea>
-        
+       
         <button class="btn-primary" onclick="submitIdentity()">COMMIT TO CORE</button>
     </div>
 </div>
-
 <div class="nexus-wrapper" id="app">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-icon" onclick="toggleSidebar()">
@@ -305,7 +293,6 @@
             </div>
         </div>
     </aside>
-
     <main class="main-stage">
         <div id="chat-view" class="content-view active">
             <div class="stage-header">
@@ -327,14 +314,12 @@
                 </div>
             </div>
         </div>
-
         <div id="discover-view" class="content-view">
             <div class="stage-header">
                 <div>Cosmic Discover Feed</div>
             </div>
             <div id="discover-feed" style="flex:1; overflow-y:auto; padding:20px;"></div>
         </div>
-
         <div id="publish-view" class="content-view">
             <div class="stage-header">
                 <div>New Cosmic Note</div>
@@ -346,7 +331,6 @@
                 <button class="btn-primary" onclick="publishNote()">BROADCAST</button>
             </div>
         </div>
-
         <div id="profile-view" class="content-view">
             <div class="stage-header">
                 <div>My Profile</div>
@@ -361,7 +345,6 @@
         </div>
     </main>
 </div>
-
 <div id="group-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:4000; align-items:center; justify-content:center;">
     <div class="lock-box" style="width:90%; max-width:500px;">
         <h3 style="color:var(--theme-accent); margin:0 0 15px;">Create New Group</h3>
@@ -371,11 +354,9 @@
         <button style="background:none; color:var(--theme-text-dim); border:none; margin-top:10px;" onclick="document.getElementById('group-modal').style.display='none';">Cancel</button>
     </div>
 </div>
-
 <script>
     // === DEBUG MODE: Full console visibility ===
     console.log("🚀 Nexus Sovereign Debug Mode Loaded");
-
     const firebaseConfig = {
         apiKey: "AIzaSyAxbBOThZxG5W_R1i0zVmh-TxzWOE1uDhM",
         authDomain: "cosmic-notes-f7648.firebaseapp.com",
@@ -384,17 +365,16 @@
         messagingSenderId: "70656136344",
         appId: "1:70656136344:web:640193b83f63cac569aced"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage();
-
     let currentUser = null;
     let activeChatId = null;
     let msgUnsubscribe = null;
+    let chatUnsubscribe = null; // Added for chat list
+    let discoverUnsubscribe = null; // Added for discover feed
     let userCache = new Map();
-
     // --- THEME ---
     function toggleTheme() {
         document.body.classList.toggle('light-theme');
@@ -403,14 +383,12 @@
     if (localStorage.getItem('theme') === 'light') {
         document.body.classList.add('light-theme');
     }
-
     // --- AUTH WITH DEBUG LOGS ---
     async function handleLogin() {
         const btn = document.querySelector('#auth-gate .btn-primary');
         const originalText = btn.innerHTML;
         btn.innerHTML = 'CONNECTING...';
         btn.disabled = true;
-
         try {
             console.log("🌐 Starting Google Sign-In...");
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -435,19 +413,18 @@
             btn.disabled = false;
         }
     }
-
     // === CRITICAL: DEBUG ONAUTHSTATECHANGED ===
     auth.onAuthStateChanged(async user => {
         console.log("🔍 onAuthStateChanged triggered →", user ? user.email : "null");
-        
+       
         if (user) {
             currentUser = user;
             console.log("👤 Current user set:", user.uid);
-            
+           
             try {
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 console.log("📄 User document exists?", userDoc.exists);
-                
+               
                 if (!userDoc.exists || !userDoc.data().name) {
                     console.log("➡️ Showing identity setup modal");
                     document.getElementById('auth-gate').style.display = 'none';
@@ -473,34 +450,33 @@
             document.getElementById('app').style.display = 'none';
         }
     });
-
     function handleLogout() {
         console.log("🚪 Logging out...");
         auth.signOut();
     }
-
     // === DEBUG: SUBMIT IDENTITY ===
     async function submitIdentity() {
         const name = document.getElementById('pilot-name').value.trim();
         const status = document.getElementById('pilot-status').value;
         const bio = document.getElementById('pilot-bio').value.trim();
-        
+       
         if (name.length < 3) {
             alert("Callsign must be at least 3 characters.");
             return;
         }
-        
+       
         console.log("💾 Saving identity:", { name, status, bio });
-        
+       
         try {
             await db.collection('users').doc(currentUser.uid).set({
+                uid: currentUser.uid, // Added uid field
                 name,
                 status,
                 bio,
-                avatarUrl: currentUser.photoURL,
+                avatarUrl: currentUser.photoURL || null,
                 lastSeen: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
-            
+           
             console.log("✅ Identity saved successfully");
             document.getElementById('identity-lock').style.display = 'none';
             document.getElementById('app').style.display = 'flex';
@@ -512,104 +488,125 @@
             alert("Failed to save profile: " + err.message);
         }
     }
-
     // --- Rest of app functions (same as before, no changes needed) ---
     async function loadUserProfile() {
-        const doc = await db.collection('users').doc(currentUser.uid).get();
-        const data = doc.data();
-        document.getElementById('profile-name').innerText = data.name;
-        document.getElementById('profile-status').innerHTML = `<span class="dot ${data.status}"></span> ${data.status}`;
-        document.getElementById('profile-bio').innerText = data.bio || 'No bio';
-        
-        if (data.avatarUrl) {
-            document.getElementById('profile-avatar').innerHTML = `<img src="${data.avatarUrl}">`;
-        } else {
-            document.getElementById('profile-avatar').innerText = data.name.charAt(0).toUpperCase();
+        try {
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            if (!doc.exists) throw new Error("User profile not found");
+            const data = doc.data();
+            document.getElementById('profile-name').innerText = data.name || 'Pilot';
+            document.getElementById('profile-status').innerHTML = `<span class="dot ${data.status}"></span> ${data.status}`;
+            document.getElementById('profile-bio').innerText = data.bio || 'No bio';
+           
+            if (data.avatarUrl) {
+                document.getElementById('profile-avatar').innerHTML = `<img src="${data.avatarUrl}" alt="Avatar">`;
+            } else {
+                document.getElementById('profile-avatar').innerText = data.name.charAt(0).toUpperCase();
+            }
+            const posts = await db.collection('cosmic_notes')
+                .where('authorId', '==', currentUser.uid)
+                .orderBy('ts', 'desc').limit(10).get();
+           
+            let html = '<h3 style="margin-bottom:15px; color:var(--theme-accent);">My Transmissions</h3>';
+            if (posts.empty) {
+                html += '<p>No transmissions yet.</p>';
+            } else {
+                posts.forEach(p => {
+                    const d = p.data();
+                    html += `<div class="post-card">
+                        <div style="font-weight:bold;">${d.title || 'Untitled'}</div>
+                        <div style="opacity:0.8; margin-top:5px;">${(d.body || '').substring(0, 80)}...</div>
+                    </div>`;
+                });
+            }
+            document.getElementById('profile-posts').innerHTML = html;
+        } catch (err) {
+            console.error("Profile load failed:", err);
+            document.getElementById('profile-posts').innerHTML = '<p style="color:var(--theme-danger);">Error loading profile</p>';
         }
-
-        const posts = await db.collection('cosmic_notes')
-            .where('authorId', '==', currentUser.uid)
-            .orderBy('ts', 'desc').limit(10).get();
-        
-        let html = '<h3 style="margin-bottom:15px; color:var(--theme-accent);">My Transmissions</h3>';
-        posts.forEach(p => {
-            const d = p.data();
-            html += `<div class="post-card">
-                <div style="font-weight:bold;">${d.title || 'Untitled'}</div>
-                <div style="opacity:0.8; margin-top:5px;">${d.body?.substring(0, 80)}...</div>
-            </div>`;
-        });
-        document.getElementById('profile-posts').innerHTML = posts.empty ? "No transmissions yet." : html;
     }
-
     function navigate(view) {
         document.querySelectorAll('.content-view').forEach(el => el.classList.remove('active'));
         document.getElementById(`${view}-view`).classList.add('active');
         document.querySelectorAll('.sidebar-icon').forEach(el => el.classList.remove('active'));
         const activeIcon = document.querySelector(`.sidebar-icon[data-view="${view}"]`);
         if (activeIcon) activeIcon.classList.add('active');
+        
+        // Unsubscribe from unused listeners
+        if (view !== 'chats' && msgUnsubscribe) {
+            msgUnsubscribe();
+            msgUnsubscribe = null;
+        }
+        if (view !== 'chats' && chatUnsubscribe) {
+            chatUnsubscribe();
+            chatUnsubscribe = null;
+        }
+        if (view !== 'discover' && discoverUnsubscribe) {
+            discoverUnsubscribe();
+            discoverUnsubscribe = null;
+        }
     }
-
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('expanded');
     }
-
     async function publishNote() {
         const title = document.getElementById('note-title').value.trim();
         const body = document.getElementById('note-body').value.trim();
-        if (!title && !body) return alert("Need content!");
-
+        if (!body) return alert("Need content!"); // Improved validation
         const noteData = {
             authorId: currentUser.uid,
-            title, body,
+            title,
+            body,
             ts: firebase.firestore.FieldValue.serverTimestamp(),
             upvotes: 0,
             commentCount: 0,
             isPublic: true
         };
-
-        if (document.getElementById('note-img').files[0]) {
-            const file = document.getElementById('note-img').files[0];
-            const path = `notes/${Date.now()}_${file.name}`;
-            const url = await storage.ref().child(path).put(file).then(r => r.ref.getDownloadURL());
-            noteData.imageUrl = url;
+        try {
+            if (document.getElementById('note-img').files[0]) {
+                const file = document.getElementById('note-img').files[0];
+                const path = `notes/${Date.now()}_${file.name}`;
+                const url = await storage.ref().child(path).put(file).then(r => r.ref.getDownloadURL());
+                noteData.imageUrl = url;
+            }
+            await db.collection('cosmic_notes').add(noteData);
+            alert("Transmission broadcast!");
+            document.getElementById('note-title').value = '';
+            document.getElementById('note-body').value = '';
+            document.getElementById('note-img').value = '';
+            navigate('discover');
+            loadDiscoverFeed();
+        } catch (err) {
+            console.error("Publish failed:", err);
+            alert("Failed to broadcast: " + err.message);
         }
-
-        await db.collection('cosmic_notes').add(noteData);
-        alert("Transmission broadcast!");
-        document.getElementById('note-title').value = '';
-        document.getElementById('note-body').value = '';
-        document.getElementById('note-img').value = '';
-        navigate('discover');
-        loadDiscoverFeed();
     }
-
     function loadDiscoverFeed() {
-        db.collection('cosmic_notes').where('isPublic', '==', true)
+        const container = document.getElementById('discover-feed');
+        container.innerHTML = '<div class="loading-spinner"></div>'; // Added loading
+        discoverUnsubscribe = db.collection('cosmic_notes').where('isPublic', '==', true)
             .orderBy('ts', 'desc').limit(50)
             .onSnapshot(async snapshot => {
-                const container = document.getElementById('discover-feed');
                 container.innerHTML = '';
                 const notes = [];
                 snapshot.forEach(doc => notes.push({id: doc.id, ...doc.data()}));
-
                 for (const note of notes) {
                     if (!userCache.has(note.authorId)) {
                         const uDoc = await db.collection('users').doc(note.authorId).get();
                         userCache.set(note.authorId, uDoc.exists ? uDoc.data() : {name: 'Unknown'});
                     }
                     const author = userCache.get(note.authorId);
-
+                    const timeStr = note.ts ? note.ts.toDate().toLocaleString() : 'Unknown time';
                     const card = document.createElement('div');
                     card.className = 'post-card';
                     card.innerHTML = `
                         <div style="display:flex; gap:12px; margin-bottom:15px;">
                             <div class="avatar-circle">
-                                ${author.avatarUrl ? `<img src="${author.avatarUrl}">` : author.name.charAt(0).toUpperCase()}
+                                ${author.avatarUrl ? `<img src="${author.avatarUrl}" alt="Avatar">` : author.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
                                 <div style="font-weight:bold; color:var(--theme-accent);">@${author.name}</div>
-                                <div style="font-size:0.8rem; opacity:0.7;">${note.ts?.toDate().toLocaleString()}</div>
+                                <div style="font-size:0.8rem; opacity:0.7;">${timeStr}</div>
                             </div>
                         </div>
                         <div style="font-size:1.2rem; margin-bottom:10px;">${note.title || 'Untitled'}</div>
@@ -622,64 +619,93 @@
                     `;
                     container.appendChild(card);
                 }
+                if (notes.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; opacity:0.7;">No cosmic notes yet.</p>';
+                }
+            }, err => {
+                console.error("Discover feed error:", err);
+                container.innerHTML = '<p style="color:var(--theme-danger);">Error loading feed</p>';
             });
     }
-
     async function upvoteNote(noteId) {
-        const noteRef = db.collection('cosmic_notes').doc(noteId);
-        const snap = await noteRef.get();
-        if (snap.exists) {
-            await noteRef.update({ upvotes: (snap.data().upvotes || 0) + 1 });
+        try {
+            const noteRef = db.collection('cosmic_notes').doc(noteId);
+            const snap = await noteRef.get();
+            if (snap.exists) {
+                await noteRef.update({ upvotes: (snap.data().upvotes || 0) + 1 });
+            }
+        } catch (err) {
+            console.error("Upvote failed:", err);
         }
     }
-
     function loadChatList() {
-        db.collection('chats').where('participants', 'array-contains', currentUser.uid)
+        const container = document.getElementById('chat-list');
+        container.innerHTML = '<div class="loading-spinner"></div>'; // Added loading
+        chatUnsubscribe = db.collection('chats').where('participants', 'array-contains', currentUser.uid)
             .orderBy('timestamp', 'desc')
             .onSnapshot(async snapshot => {
-                const container = document.getElementById('chat-list');
                 container.innerHTML = '<div style="padding:15px; font-weight:bold; color:var(--theme-accent);">CONVERSATIONS</div>';
-                
+               
                 for (const doc of snapshot.docs) {
                     const chat = doc.data();
                     const otherIds = chat.participants.filter(id => id !== currentUser.uid);
-                    let title = 'Group';
+                    let title = chat.name || 'Group';
+                    let subtitle = chat.lastMsg || 'No messages yet';
+
                     if (!chat.isGroup && otherIds.length === 1) {
-                        if (!userCache.has(otherIds[0])) {
-                            const uDoc = await db.collection('users').doc(otherIds[0]).get();
-                            userCache.set(otherIds[0], uDoc.exists ? uDoc.data() : {name: 'Unknown'});
+                        const otherId = otherIds[0];
+                        if (!userCache.has(otherId)) {
+                            const uDoc = await db.collection('users').doc(otherId).get();
+                            userCache.set(otherId, uDoc.data() || {name: 'Unknown'});
                         }
-                        title = userCache.get(otherIds[0]).name;
-                    } else if (chat.name) {
-                        title = chat.name;
+                        title = userCache.get(otherId).name;
                     }
+
+                    const timeStr = chat.timestamp ?
+                        chat.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
 
                     const div = document.createElement('div');
                     div.style = "padding:12px 15px; cursor:pointer; border-bottom:1px solid var(--theme-border);";
-                    div.innerHTML = `<strong>${title}</strong><div style="font-size:0.8rem; opacity:0.7; margin-top:4px;">${chat.lastMsg?.substring(0,30) || 'No messages'}</div>`;
-                    div.onclick = () => openChat(doc.id, title);
+                    div.innerHTML = `
+                        <strong>${title}</strong>
+                        <div style="font-size:0.8rem; opacity:0.7; margin-top:4px;">
+                            ${subtitle.substring(0,30)}${subtitle.length>30?'...':''}
+                        </div>
+                        <div style="font-size:0.7rem; opacity:0.5; text-align:right;">${timeStr}</div>
+                    `;
+                    div.onclick = () => openChat(doc.id, title, chat.isGroup);
                     container.appendChild(div);
                 }
+                if (snapshot.empty) {
+                    container.innerHTML += '<p style="padding:15px; opacity:0.7;">No conversations yet.</p>';
+                }
+            }, err => {
+                console.error("Chat list error:", err);
+                container.innerHTML = '<p style="color:var(--theme-danger);">Error loading chats</p>';
             });
     }
-
-    function openChat(chatId, title) {
+    function openChat(chatId, title, isGroup = false) {
         if (msgUnsubscribe) msgUnsubscribe();
         activeChatId = chatId;
         document.getElementById('chat-title').innerText = title;
-
+        const view = document.getElementById('message-viewport');
+        view.innerHTML = '<div class="loading-spinner"></div>'; // Added loading
         msgUnsubscribe = db.collection('chats').doc(chatId).collection('messages')
             .orderBy('ts', 'asc')
             .onSnapshot(snap => {
-                const view = document.getElementById('message-viewport');
                 view.innerHTML = '';
                 snap.forEach(doc => {
                     const m = doc.data();
                     const isMe = m.uid === currentUser.uid;
                     const time = m.ts ? new Date(m.ts.seconds * 1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+                    let senderName = '';
+                    if (isGroup && !isMe) {
+                        senderName = userCache.has(m.uid) ? userCache.get(m.uid).name + ': ' : 'User: ';
+                    }
                     const div = document.createElement('div');
                     div.className = `msg-bubble ${isMe ? 'msg-sent' : ''}`;
                     div.innerHTML = `
+                        ${senderName ? `<div style="font-weight:bold; font-size:0.85rem; opacity:0.9; margin-bottom:4px;">${senderName}</div>` : ''}
                         ${m.image ? `<img src="${m.image}" class="msg-image">` : ''}
                         <div>${m.text || ''}</div>
                         <div class="msg-info">${time} ${isMe ? '✓✓' : ''}</div>
@@ -687,86 +713,103 @@
                     view.appendChild(div);
                 });
                 view.scrollTop = view.scrollHeight;
+            }, err => {
+                console.error("Messages load error:", err);
+                view.innerHTML = '<p style="color:var(--theme-danger);">Error loading messages</p>';
             });
     }
-
     async function sendTransmission() {
         const text = document.getElementById('msg-input').value.trim();
         if (!text || !activeChatId) return;
         document.getElementById('msg-input').value = '';
-        await db.collection('chats').doc(activeChatId).collection('messages').add({
-            text, uid: currentUser.uid, ts: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        await db.collection('chats').doc(activeChatId).update({
-            lastMsg: text,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        try {
+            await db.collection('chats').doc(activeChatId).collection('messages').add({
+                text, uid: currentUser.uid, ts: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await db.collection('chats').doc(activeChatId).update({
+                lastMsg: text,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (err) {
+            console.error("Send failed:", err);
+            alert("Failed to send message");
+        }
     }
-
     async function processImageUpload(input) {
         if (!input.files[0] || !activeChatId) return;
         const file = input.files[0];
-        const path = `chat_images/${activeChatId}/${Date.now()}_${file.name}`;
-        const url = await storage.ref().child(path).put(file).then(r => r.ref.getDownloadURL());
-        await db.collection('chats').doc(activeChatId).collection('messages').add({
-            image: url, uid: currentUser.uid, ts: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        await db.collection('chats').doc(activeChatId).update({
-            lastMsg: "📷 Image sent",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        try {
+            const path = `chat_images/${activeChatId}/${Date.now()}_${file.name}`;
+            const url = await storage.ref().child(path).put(file).then(r => r.ref.getDownloadURL());
+            await db.collection('chats').doc(activeChatId).collection('messages').add({
+                image: url, uid: currentUser.uid, ts: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await db.collection('chats').doc(activeChatId).update({
+                lastMsg: "📷 Image sent",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (err) {
+            console.error("Image upload failed:", err);
+            alert("Failed to upload image");
+        }
     }
-
     function openCreateGroupModal() {
         document.getElementById('group-modal').style.display = 'flex';
         document.getElementById('group-name').value = '';
         loadAvailableMembers();
     }
-
     async function loadAvailableMembers() {
-        const usersSnap = await db.collection('users').where('uid', '!=', currentUser.uid).get();
         const list = document.getElementById('group-member-list');
-        list.innerHTML = '';
-        usersSnap.forEach(doc => {
-            const u = doc.data();
-            const div = document.createElement('div');
-            div.innerHTML = `<label style="display:flex; align-items:center; padding:8px; cursor:pointer;">
-                <input type="checkbox" value="${u.uid}" style="margin-right:10px;"> ${u.name}
-            </label>`;
-            list.appendChild(div);
-        });
+        list.innerHTML = '<div class="loading-spinner"></div>'; // Added loading
+        try {
+            const usersSnap = await db.collection('users').limit(50).get();
+            list.innerHTML = '';
+            usersSnap.forEach(doc => {
+                const u = doc.data();
+                if (u.uid === currentUser.uid) return;
+                const div = document.createElement('div');
+                div.innerHTML = `<label style="display:flex; align-items:center; padding:8px; cursor:pointer;">
+                    <input type="checkbox" value="${u.uid}" style="margin-right:10px;"> ${u.name || 'Unnamed'}
+                </label>`;
+                list.appendChild(div);
+            });
+            if (usersSnap.empty) {
+                list.innerHTML = '<div style="padding:10px; color:#888;">No other pilots found yet.</div>';
+            }
+        } catch (err) {
+            list.innerHTML = '<div style="color:var(--theme-danger);">Error loading users</div>';
+            console.error(err);
+        }
     }
-
     async function createGroup() {
         const name = document.getElementById('group-name').value.trim() || 'New Group';
         const checked = Array.from(document.querySelectorAll('#group-member-list input:checked'));
         const memberIds = [currentUser.uid, ...checked.map(el => el.value)];
-
         if (memberIds.length < 3) return alert("Need at least 2 other members for a group.");
-
         const chatId = 'group_' + Date.now();
         const names = {};
-        names[currentUser.uid] = (await db.collection('users').doc(currentUser.uid).get()).data().name;
-        for (const id of memberIds) {
-            if (id !== currentUser.uid) {
+        try {
+            const selfDoc = await db.collection('users').doc(currentUser.uid).get();
+            names[currentUser.uid] = selfDoc.data().name;
+            for (const id of memberIds.filter(id => id !== currentUser.uid)) {
                 const uDoc = await db.collection('users').doc(id).get();
                 if (uDoc.exists) names[id] = uDoc.data().name;
             }
+            await db.collection('chats').doc(chatId).set({
+                participants: memberIds,
+                name,
+                names,
+                isGroup: true,
+                lastMsg: "Group created.",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById('group-modal').style.display = 'none';
+            loadChatList();
+        } catch (err) {
+            console.error("Group creation failed:", err);
+            alert("Failed to create group: " + err.message);
         }
-
-        await db.collection('chats').doc(chatId).set({
-            participants: memberIds,
-            name,
-            names,
-            isGroup: true,
-            lastMsg: "Group created.",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        document.getElementById('group-modal').style.display = 'none';
-        loadChatList();
     }
-
     const canvas = document.getElementById('star-canvas');
     const ctx = canvas.getContext('2d');
     let stars = [];
@@ -782,6 +825,7 @@
         }));
     }
     function renderStars() {
+        if (document.hidden) return requestAnimationFrame(renderStars); // Save CPU
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         stars.forEach(s => {
             s.x += s.speed;
@@ -797,7 +841,5 @@
     initStars();
     renderStars();
 </script>
-
 </body>
 </html>
-
