@@ -4,16 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nexus Gram | Cosmic Social Network</title>
+  
+    <!-- Firebase Scripts (Updated to v9 modular for better performance and tree-shaking) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, query, where, orderBy, limit, runTransaction, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        window.firebaseModules = { initializeApp, getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, query, where, orderBy, limit, runTransaction, serverTimestamp, getDocs, getStorage, ref, uploadBytes, getDownloadURL };
+    </script>
    
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+   
     <style>
         /* Root Variables - Enhanced with more colors and sizes */
         :root {
@@ -23,6 +27,7 @@
             --theme-text-dim: #a0a0a0;
             --theme-border: rgba(0, 210, 255, 0.15);
             --theme-accent: #00d2ff;
+            --theme-accent-dark: #00b2df;
             --theme-accent-glow: rgba(0, 210, 255, 0.4);
             --theme-wa-sent: #005c4b;
             --theme-wa-received: #202c33;
@@ -42,7 +47,7 @@
             --theme-spacing-medium: 16px;
             --theme-spacing-large: 24px;
         }
-        
+       
         /* Light Theme - Improved contrast */
         .light-theme {
             --theme-bg: #f8f9fa;
@@ -51,6 +56,7 @@
             --theme-text-dim: #666666;
             --theme-border: rgba(0, 150, 255, 0.2);
             --theme-accent: #0077cc;
+            --theme-accent-dark: #005fa3;
             --theme-accent-glow: rgba(0, 119, 204, 0.3);
             --theme-wa-sent: #dcf8c6;
             --theme-wa-received: #ffffff;
@@ -64,7 +70,7 @@
             --theme-story-gradient: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
             --theme-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-        
+       
         /* Global Styles - Enhanced reset and typography */
         * {
             box-sizing: border-box;
@@ -75,7 +81,7 @@
             font-size: var(--theme-font-size-base);
             line-height: 1.5;
         }
-        
+       
         body, html {
             background: var(--theme-bg);
             color: var(--theme-text);
@@ -85,7 +91,7 @@
             transition: background 0.3s ease;
             position: relative;
         }
-        
+       
         /* Star Canvas - Improved with more stars and animation */
         #star-canvas {
             position: fixed;
@@ -95,7 +101,7 @@
             display: block;
         }
         .light-theme #star-canvas { display: none; }
-        
+       
         /* Progress Bar - Animated */
         #progress-bar {
             position: fixed;
@@ -108,41 +114,41 @@
             z-index: 5000;
             box-shadow: 0 0 10px var(--theme-accent);
         }
-        
+       
         /* Animations - Added more for smoothness */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        
+       
         @keyframes slideUp {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        
+       
         @keyframes scaleIn {
             from { transform: scale(0.9); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
-        
+       
         @keyframes likeAnimation {
             0% { transform: scale(1); }
             50% { transform: scale(1.5); }
             100% { transform: scale(1); }
         }
-        
+       
         @keyframes storyRing {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        
+       
         @keyframes pulse {
             0% { opacity: 0.5; }
             50% { opacity: 1; }
             100% { opacity: 0.5; }
         }
-        
+       
         /* Auth Gate - Improved centering and animation */
         #auth-gate {
             position: fixed;
@@ -156,7 +162,7 @@
             text-align: center;
             animation: fadeIn 1s ease-in-out;
         }
-        
+       
         .gate-logo {
             font-size: 3rem;
             font-weight: 900;
@@ -166,7 +172,7 @@
             margin-bottom: 10px;
             animation: pulse 2s infinite;
         }
-        
+       
         /* Identity Lock - Enhanced form fields */
         #identity-lock {
             position: fixed;
@@ -179,7 +185,7 @@
             justify-content: center;
             padding: 20px;
         }
-        
+       
         .lock-box {
             background: var(--theme-panel);
             padding: 40px;
@@ -191,7 +197,7 @@
             animation: slideUp 0.5s ease;
             color: var(--theme-text);
         }
-        
+       
         /* App Wrapper - Flex for better layout */
         .nexus-wrapper {
             display: none;
@@ -202,7 +208,7 @@
             flex-direction: column;
             animation: fadeIn 1s ease;
         }
-        
+       
         /* Header for PC - Sticky with shadow */
         .app-header {
             height: 60px;
@@ -219,30 +225,30 @@
             z-index: 100;
             box-shadow: var(--theme-shadow);
         }
-        
+       
         .header-logo {
             font-size: var(--theme-font-size-large);
             font-weight: bold;
             color: var(--theme-accent);
         }
-        
+       
         .header-icons {
             display: flex;
             gap: var(--theme-spacing-medium);
         }
-        
+       
         .header-icon {
             font-size: 1.2rem;
             color: var(--theme-text-dim);
             cursor: pointer;
             transition: color 0.2s, transform 0.2s;
         }
-        
+       
         .header-icon:hover {
             color: var(--theme-accent);
             transform: scale(1.1);
         }
-        
+       
         /* Bottom Nav for Mobile - Improved icons */
         .bottom-nav {
             height: 60px;
@@ -258,7 +264,7 @@
             z-index: 100;
             box-shadow: var(--theme-shadow);
         }
-        
+       
         .nav-icon {
             font-size: 1.4rem;
             color: var(--theme-text-dim);
@@ -266,12 +272,12 @@
             transition: color 0.2s, transform 0.2s;
             position: relative;
         }
-        
+       
         .nav-icon.active {
             color: var(--theme-accent);
             transform: scale(1.1);
         }
-        
+       
         /* Main Content - Centered with max-width */
         .main-content {
             flex: 1;
@@ -283,7 +289,7 @@
             width: 100%;
             animation: fadeIn 0.5s ease;
         }
-        
+       
         /* Stories Bar - Scrollable with gradients */
         .stories-bar {
             display: flex;
@@ -294,11 +300,11 @@
             animation: fadeIn 0.5s ease;
             scrollbar-width: none;
         }
-        
+       
         .stories-bar::-webkit-scrollbar {
             display: none;
         }
-        
+       
         .story-circle {
             width: 60px;
             height: 60px;
@@ -312,12 +318,12 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        
+       
         .story-circle:hover {
             transform: scale(1.05);
             box-shadow: var(--theme-shadow);
         }
-        
+       
         .story-avatar {
             width: 54px;
             height: 54px;
@@ -328,14 +334,14 @@
             justify-content: center;
             overflow: hidden;
         }
-        
+       
         .story-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             border-radius: 50%;
         }
-        
+       
         /* Post Card - Enhanced with shadows and transitions */
         .post-card {
             background: var(--theme-panel);
@@ -347,18 +353,18 @@
             box-shadow: var(--theme-shadow);
             transition: box-shadow 0.2s;
         }
-        
+       
         .post-card:hover {
             box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
-        
+       
         .post-header {
             display: flex;
             align-items: center;
             padding: var(--theme-spacing-medium);
             gap: var(--theme-spacing-small);
         }
-        
+       
         .post-avatar {
             width: 40px;
             height: 40px;
@@ -366,103 +372,103 @@
             background: var(--theme-accent-glow);
             overflow: hidden;
         }
-        
+       
         .post-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             border-radius: 50%;
         }
-        
+       
         .post-username {
             font-weight: bold;
             color: var(--theme-accent);
         }
-        
+       
         .post-time {
             font-size: var(--theme-font-size-small);
             color: var(--theme-text-dim);
             margin-left: auto;
         }
-        
+       
         .post-image {
             width: 100%;
             max-height: 600px;
             object-fit: cover;
             transition: transform 0.3s;
         }
-        
+       
         .post-image:hover {
             transform: scale(1.05);
         }
-        
+       
         .post-actions {
             display: flex;
             gap: var(--theme-spacing-medium);
             padding: var(--theme-spacing-small) var(--theme-spacing-medium);
         }
-        
+       
         .action-btn {
             font-size: 1.2rem;
             color: var(--theme-text-dim);
             cursor: pointer;
             transition: color 0.2s, transform 0.2s;
         }
-        
+       
         .action-btn:hover {
             color: var(--theme-accent);
             transform: scale(1.1);
         }
-        
+       
         .action-btn.liked {
             color: var(--theme-like);
             animation: likeAnimation 0.3s ease;
         }
-        
+       
         .post-caption {
             padding: 0 var(--theme-spacing-medium) var(--theme-spacing-medium);
             font-size: var(--theme-font-size-small);
             line-height: 1.4;
         }
-        
+       
         .post-comments {
             padding: 0 var(--theme-spacing-medium) var(--theme-spacing-medium);
             border-top: 1px solid var(--theme-border);
             margin-top: var(--theme-spacing-small);
         }
-        
+       
         .comment {
             display: flex;
             gap: var(--theme-spacing-small);
             margin-bottom: var(--theme-spacing-small);
         }
-        
+       
         .comment-avatar {
             width: 30px;
             height: 30px;
             border-radius: 50%;
             overflow: hidden;
         }
-        
+       
         .comment-content {
             flex: 1;
         }
-        
+       
         .comment-username {
             font-weight: bold;
             color: var(--theme-comment);
         }
-        
+       
         .comment-text {
             font-size: var(--theme-font-size-small);
         }
-        
+       
         .comment-input {
             display: flex;
             gap: var(--theme-spacing-small);
             margin-top: var(--theme-spacing-small);
         }
-        
+       
         .comment-input input {
             flex: 1;
             background: rgba(0,0,0,0.05);
@@ -472,13 +478,13 @@
             color: var(--theme-text);
             font-size: var(--theme-font-size-small);
         }
-        
+       
         .comment-send {
             color: var(--theme-accent);
             cursor: pointer;
             font-size: 1.2rem;
         }
-        
+       
         /* Publish Modal - Improved with preview and drag-drop */
         #publish-modal {
             position: fixed;
@@ -491,7 +497,7 @@
             z-index: 3000;
             animation: fadeIn 0.3s ease;
         }
-        
+       
         .publish-box {
             background: var(--theme-panel);
             padding: var(--theme-spacing-large);
@@ -502,14 +508,14 @@
             box-shadow: var(--theme-shadow);
             animation: slideUp 0.3s ease;
         }
-        
+       
         .publish-header {
             font-size: var(--theme-font-size-large);
             font-weight: bold;
             margin-bottom: var(--theme-spacing-medium);
             color: var(--theme-accent);
         }
-        
+       
         .publish-textarea {
             width: 100%;
             height: 120px;
@@ -522,7 +528,7 @@
             margin-bottom: var(--theme-spacing-medium);
             font-size: var(--theme-font-size-small);
         }
-        
+       
         .publish-image-preview {
             width: 100%;
             max-height: 300px;
@@ -532,13 +538,13 @@
             display: none;
             box-shadow: var(--theme-shadow);
         }
-        
+       
         .publish-actions {
             display: flex;
             gap: var(--theme-spacing-medium);
             justify-content: flex-end;
         }
-        
+       
         .publish-btn {
             background: var(--theme-accent);
             color: #fff;
@@ -549,12 +555,12 @@
             font-weight: bold;
             transition: background 0.2s, transform 0.2s;
         }
-        
+       
         .publish-btn:hover {
-            background: darken(var(--theme-accent), 10%);
+            background: var(--theme-accent-dark);
             transform: translateY(-2px);
         }
-        
+       
         /* Profile Page - Improved layout with editable bio */
         .profile-header {
             display: flex;
@@ -564,7 +570,7 @@
             border-bottom: 1px solid var(--theme-border);
             animation: fadeIn 0.5s ease;
         }
-        
+       
         .profile-avatar {
             width: 120px;
             height: 120px;
@@ -575,18 +581,18 @@
             position: relative;
             transition: transform 0.3s;
         }
-        
+       
         .profile-avatar:hover {
             transform: scale(1.05);
         }
-        
+       
         .profile-name {
             font-size: var(--theme-font-size-large);
             font-weight: bold;
             color: var(--theme-accent);
             margin-bottom: var(--theme-spacing-small);
         }
-        
+       
         .profile-bio {
             font-size: var(--theme-font-size-small);
             color: var(--theme-text-dim);
@@ -594,34 +600,34 @@
             margin: var(--theme-spacing-small) 0;
             max-width: 80%;
         }
-        
+       
         .profile-stats {
             display: flex;
             gap: var(--theme-spacing-large);
             margin-top: var(--theme-spacing-small);
         }
-        
+       
         .stat {
             text-align: center;
         }
-        
+       
         .stat-number {
             font-weight: bold;
             font-size: var(--theme-font-size-large);
         }
-        
+       
         .stat-label {
             font-size: var(--theme-font-size-small);
             color: var(--theme-text-dim);
         }
-        
+       
         .profile-posts {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: var(--theme-spacing-small);
             padding: var(--theme-spacing-small);
         }
-        
+       
         .profile-post-img {
             width: 100%;
             aspect-ratio: 1;
@@ -629,16 +635,16 @@
             border-radius: 4px;
             transition: transform 0.3s;
         }
-        
+       
         .profile-post-img:hover {
             transform: scale(1.05);
         }
-        
+       
         /* Messages/DMs - Improved with search */
         .messages-list {
             padding: var(--theme-spacing-medium);
         }
-        
+       
         .message-thread {
             display: flex;
             align-items: center;
@@ -647,28 +653,28 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        
+       
         .message-thread:hover {
             background: var(--theme-accent-glow);
         }
-        
+       
         .message-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
             overflow: hidden;
         }
-        
+       
         .message-info {
             margin-left: var(--theme-spacing-medium);
             flex: 1;
         }
-        
+       
         .message-username {
             font-weight: bold;
             font-size: var(--theme-font-size-small);
         }
-        
+       
         .message-preview {
             font-size: var(--theme-font-size-small);
             color: var(--theme-text-dim);
@@ -676,14 +682,14 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+       
         /* Message View - Enhanced scrolling */
         .message-view {
             display: flex;
             flex-direction: column;
             height: calc(100vh - 120px);
         }
-        
+       
         .message-header {
             padding: var(--theme-spacing-medium);
             border-bottom: 1px solid var(--theme-border);
@@ -691,22 +697,22 @@
             align-items: center;
             gap: var(--theme-spacing-medium);
         }
-        
+       
         .message-back {
             font-size: 1.2rem;
             cursor: pointer;
             transition: color 0.2s;
         }
-        
+       
         .message-back:hover {
             color: var(--theme-accent);
         }
-        
+       
         .message-title {
             font-weight: bold;
             font-size: var(--theme-font-size-medium);
         }
-        
+       
         .message-viewport {
             flex: 1;
             overflow-y: auto;
@@ -716,7 +722,7 @@
             gap: var(--theme-spacing-small);
             scroll-behavior: smooth;
         }
-        
+       
         .msg-bubble {
             max-width: 70%;
             padding: var(--theme-spacing-small) var(--theme-spacing-medium);
@@ -725,31 +731,31 @@
             position: relative;
             box-shadow: var(--theme-shadow);
         }
-        
+       
         .msg-received {
             background: var(--theme-wa-received);
             align-self: flex-start;
         }
-        
+       
         .msg-sent {
             background: var(--theme-wa-sent);
             align-self: flex-end;
             color: #fff;
         }
-        
+       
         .msg-time {
             font-size: 0.7rem;
             opacity: 0.7;
             text-align: right;
             margin-top: var(--theme-spacing-small);
         }
-        
+       
         .message-input {
             display: flex;
             padding: var(--theme-spacing-medium);
             border-top: 1px solid var(--theme-border);
         }
-        
+       
         .message-input input {
             flex: 1;
             background: rgba(0,0,0,0.05);
@@ -759,7 +765,7 @@
             color: var(--theme-text);
             font-size: var(--theme-font-size-small);
         }
-        
+       
         .message-send {
             margin-left: var(--theme-spacing-small);
             color: var(--theme-accent);
@@ -767,11 +773,11 @@
             font-size: 1.2rem;
             transition: transform 0.2s;
         }
-        
+       
         .message-send:hover {
             transform: scale(1.1);
         }
-        
+       
         /* Search Page - Improved with filters */
         .search-input {
             width: 100%;
@@ -783,13 +789,13 @@
             color: var(--theme-text);
             font-size: var(--theme-font-size-small);
         }
-        
+       
         .search-results {
             display: flex;
             flex-direction: column;
             gap: var(--theme-spacing-medium);
         }
-        
+       
         .search-user {
             display: flex;
             align-items: center;
@@ -799,31 +805,31 @@
             cursor: pointer;
             transition: background 0.2s, box-shadow 0.2s;
         }
-        
+       
         .search-user:hover {
             background: var(--theme-accent-glow);
             box-shadow: var(--theme-shadow);
         }
-        
+       
         .search-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
             overflow: hidden;
         }
-        
+       
         .search-name {
             margin-left: var(--theme-spacing-medium);
             font-weight: bold;
             font-size: var(--theme-font-size-small);
         }
-        
+       
         .search-bio {
             font-size: var(--theme-font-size-small);
             color: var(--theme-text-dim);
             margin-left: var(--theme-spacing-small);
         }
-        
+       
         .follow-btn {
             margin-left: auto;
             background: var(--theme-accent);
@@ -833,12 +839,13 @@
             font-size: var(--theme-font-size-small);
             cursor: pointer;
             transition: background 0.2s;
+            border: none;
         }
-        
+       
         .follow-btn:hover {
-            background: darken(var(--theme-accent), 10%);
+            background: var(--theme-accent-dark);
         }
-        
+       
         /* Loading Spinner - Larger for better visibility */
         .loading-spinner {
             border: 4px solid var(--theme-border);
@@ -849,26 +856,26 @@
             animation: spin 1s linear infinite;
             margin: var(--theme-spacing-large) auto;
         }
-        
+       
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+       
         /* Responsive Styles - Enhanced with more breakpoints */
         @media (min-width: 768px) {
             .nexus-wrapper {
                 flex-direction: row;
             }
-            
+           
             .app-header {
                 display: none;
             }
-            
+           
             .bottom-nav {
                 display: none;
             }
-            
+           
             .sidebar {
                 width: 72px;
                 background: var(--theme-panel);
@@ -883,11 +890,11 @@
                 left: 0;
                 transition: width 0.3s ease;
             }
-            
+           
             .sidebar:hover {
                 width: 240px;
             }
-            
+           
             .sidebar-icon {
                 width: 50px;
                 height: 50px;
@@ -901,133 +908,133 @@
                 color: var(--theme-text-dim);
                 transition: all 0.2s;
             }
-            
+           
             .sidebar-icon:hover {
                 background: var(--theme-accent-glow);
                 color: var(--theme-accent);
             }
-            
+           
             .sidebar-label {
                 display: none;
             }
-            
+           
             .sidebar:hover .sidebar-label {
                 display: inline;
                 margin-left: var(--theme-spacing-medium);
                 font-size: var(--theme-font-size-medium);
             }
-            
+           
             .main-content {
                 margin-left: 72px;
                 padding-top: 0;
                 padding-bottom: 0;
             }
-            
+           
             .stories-bar {
                 padding: var(--theme-spacing-large) 0;
             }
-            
+           
             .story-circle {
                 width: 80px;
                 height: 80px;
             }
-            
+           
             .story-avatar {
                 width: 74px;
                 height: 74px;
             }
-            
+           
             .post-card {
                 max-width: 614px;
                 margin: 0 auto var(--theme-spacing-large);
             }
-            
+           
             .profile-posts {
                 grid-template-columns: repeat(3, 1fr);
                 gap: 28px;
             }
         }
-        
+       
         @media (max-width: 767px) {
             .sidebar {
                 display: none;
             }
-            
+           
             .main-content {
                 padding-top: 60px;
                 padding-bottom: 60px;
             }
-            
+           
             .post-card {
                 border-radius: 0;
                 border-left: none;
                 border-right: none;
             }
-            
+           
             .profile-posts {
                 grid-template-columns: repeat(3, 1fr);
                 gap: 2px;
             }
-            
+           
             .story-circle {
                 width: 50px;
                 height: 50px;
             }
-            
+           
             .story-avatar {
                 width: 44px;
                 height: 44px;
             }
-            
+           
             .profile-avatar {
                 width: 80px;
                 height: 80px;
             }
         }
-        
+       
         @media (min-width: 1024px) {
             .main-content {
                 max-width: 935px;
             }
-            
+           
             .post-card {
                 max-width: 614px;
             }
-            
+           
             .profile-posts {
                 grid-template-columns: repeat(4, 1fr);
                 gap: 30px;
             }
         }
-        
+       
         @media (min-width: 1440px) {
             .main-content {
                 max-width: 1150px;
             }
-            
+           
             .post-card {
                 max-width: 700px;
             }
-            
+           
             .profile-posts {
                 grid-template-columns: repeat(5, 1fr);
             }
         }
-        
+       
         /* Dark mode specific adjustments */
         .light-theme .post-card {
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
+       
         .light-theme .input {
             background: #f5f5f5;
         }
-        
+       
         .light-theme .msg-sent {
             color: #000;
         }
-        
-        /* Additional Styles to Pad Line Count - Extended to reach ~5000 lines */
+       
+        /* Additional Styles */
         .hidden { display: none; }
         .visible { display: block; }
         .flex { display: flex; }
@@ -1104,654 +1111,80 @@
         .bg-danger { background: var(--theme-danger); }
         .text-accent { color: var(--theme-accent); }
         .text-danger { color: var(--theme-danger); }
+        .btn-primary {
+            background: var(--theme-accent);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.2s;
+            width: 100%;
+            max-width: 250px;
+        }
+        .btn-primary:hover {
+            background: var(--theme-accent-dark);
+            transform: translateY(-2px);
+        }
         .btn-secondary { background: transparent; border: 1px solid var(--theme-accent); color: var(--theme-accent); padding: var(--theme-spacing-small) var(--theme-spacing-medium); border-radius: 25px; cursor: pointer; transition: all 0.2s; }
         .btn-secondary:hover { background: var(--theme-accent); color: #fff; }
         .btn-danger { background: var(--theme-danger); color: #fff; padding: var(--theme-spacing-small) var(--theme-spacing-medium); border-radius: 25px; cursor: pointer; }
         .input-error { border-color: var(--theme-danger); }
         .input-success { border-color: var(--theme-online); }
-        
-        /* Extended Placeholder Classes for Line Count Padding (to reach ~5000 lines total) */
-        .placeholder-class-1 { content: ''; }
-        .placeholder-class-2 { content: ''; }
-        .placeholder-class-3 { content: ''; }
-        .placeholder-class-4 { content: ''; }
-        .placeholder-class-5 { content: ''; }
-        .placeholder-class-6 { content: ''; }
-        .placeholder-class-7 { content: ''; }
-        .placeholder-class-8 { content: ''; }
-        .placeholder-class-9 { content: ''; }
-        .placeholder-class-10 { content: ''; }
-        .placeholder-class-11 { content: ''; }
-        .placeholder-class-12 { content: ''; }
-        .placeholder-class-13 { content: ''; }
-        .placeholder-class-14 { content: ''; }
-        .placeholder-class-15 { content: ''; }
-        .placeholder-class-16 { content: ''; }
-        .placeholder-class-17 { content: ''; }
-        .placeholder-class-18 { content: ''; }
-        .placeholder-class-19 { content: ''; }
-        .placeholder-class-20 { content: ''; }
-        .placeholder-class-21 { content: ''; }
-        .placeholder-class-22 { content: ''; }
-        .placeholder-class-23 { content: ''; }
-        .placeholder-class-24 { content: ''; }
-        .placeholder-class-25 { content: ''; }
-        .placeholder-class-26 { content: ''; }
-        .placeholder-class-27 { content: ''; }
-        .placeholder-class-28 { content: ''; }
-        .placeholder-class-29 { content: ''; }
-        .placeholder-class-30 { content: ''; }
-        .placeholder-class-31 { content: ''; }
-        .placeholder-class-32 { content: ''; }
-        .placeholder-class-33 { content: ''; }
-        .placeholder-class-34 { content: ''; }
-        .placeholder-class-35 { content: ''; }
-        .placeholder-class-36 { content: ''; }
-        .placeholder-class-37 { content: ''; }
-        .placeholder-class-38 { content: ''; }
-        .placeholder-class-39 { content: ''; }
-        .placeholder-class-40 { content: ''; }
-        .placeholder-class-41 { content: ''; }
-        .placeholder-class-42 { content: ''; }
-        .placeholder-class-43 { content: ''; }
-        .placeholder-class-44 { content: ''; }
-        .placeholder-class-45 { content: ''; }
-        .placeholder-class-46 { content: ''; }
-        .placeholder-class-47 { content: ''; }
-        .placeholder-class-48 { content: ''; }
-        .placeholder-class-49 { content: ''; }
-        .placeholder-class-50 { content: ''; }
-        .placeholder-class-51 { content: ''; }
-        .placeholder-class-52 { content: ''; }
-        .placeholder-class-53 { content: ''; }
-        .placeholder-class-54 { content: ''; }
-        .placeholder-class-55 { content: ''; }
-        .placeholder-class-56 { content: ''; }
-        .placeholder-class-57 { content: ''; }
-        .placeholder-class-58 { content: ''; }
-        .placeholder-class-59 { content: ''; }
-        .placeholder-class-60 { content: ''; }
-        .placeholder-class-61 { content: ''; }
-        .placeholder-class-62 { content: ''; }
-        .placeholder-class-63 { content: ''; }
-        .placeholder-class-64 { content: ''; }
-        .placeholder-class-65 { content: ''; }
-        .placeholder-class-66 { content: ''; }
-        .placeholder-class-67 { content: ''; }
-        .placeholder-class-68 { content: ''; }
-        .placeholder-class-69 { content: ''; }
-        .placeholder-class-70 { content: ''; }
-        .placeholder-class-71 { content: ''; }
-        .placeholder-class-72 { content: ''; }
-        .placeholder-class-73 { content: ''; }
-        .placeholder-class-74 { content: ''; }
-        .placeholder-class-75 { content: ''; }
-        .placeholder-class-76 { content: ''; }
-        .placeholder-class-77 { content: ''; }
-        .placeholder-class-78 { content: ''; }
-        .placeholder-class-79 { content: ''; }
-        .placeholder-class-80 { content: ''; }
-        .placeholder-class-81 { content: ''; }
-        .placeholder-class-82 { content: ''; }
-        .placeholder-class-83 { content: ''; }
-        .placeholder-class-84 { content: ''; }
-        .placeholder-class-85 { content: ''; }
-        .placeholder-class-86 { content: ''; }
-        .placeholder-class-87 { content: ''; }
-        .placeholder-class-88 { content: ''; }
-        .placeholder-class-89 { content: ''; }
-        .placeholder-class-90 { content: ''; }
-        .placeholder-class-91 { content: ''; }
-        .placeholder-class-92 { content: ''; }
-        .placeholder-class-93 { content: ''; }
-        .placeholder-class-94 { content: ''; }
-        .placeholder-class-95 { content: ''; }
-        .placeholder-class-96 { content: ''; }
-        .placeholder-class-97 { content: ''; }
-        .placeholder-class-98 { content: ''; }
-        .placeholder-class-99 { content: ''; }
-        .placeholder-class-100 { content: ''; }
-        /* ... continuing to add placeholders to inflate line count ... */
-        .placeholder-class-1000 { content: ''; }
-        .placeholder-class-1001 { content: ''; }
-        .placeholder-class-1002 { content: ''; }
-        .placeholder-class-1003 { content: ''; }
-        .placeholder-class-1004 { content: ''; }
-        .placeholder-class-1005 { content: ''; }
-        .placeholder-class-1006 { content: ''; }
-        .placeholder-class-1007 { content: ''; }
-        .placeholder-class-1008 { content: ''; }
-        .placeholder-class-1009 { content: ''; }
-        .placeholder-class-1010 { content: ''; }
-        .placeholder-class-1011 { content: ''; }
-        .placeholder-class-1012 { content: ''; }
-        .placeholder-class-1013 { content: ''; }
-        .placeholder-class-1014 { content: ''; }
-        .placeholder-class-1015 { content: ''; }
-        .placeholder-class-1016 { content: ''; }
-        .placeholder-class-1017 { content: ''; }
-        .placeholder-class-1018 { content: ''; }
-        .placeholder-class-1019 { content: ''; }
-        .placeholder-class-1020 { content: ''; }
-        .placeholder-class-1021 { content: ''; }
-        .placeholder-class-1022 { content: ''; }
-        .placeholder-class-1023 { content: ''; }
-        .placeholder-class-1024 { content: ''; }
-        .placeholder-class-1025 { content: ''; }
-        .placeholder-class-1026 { content: ''; }
-        .placeholder-class-1027 { content: ''; }
-        .placeholder-class-1028 { content: ''; }
-        .placeholder-class-1029 { content: ''; }
-        .placeholder-class-1030 { content: ''; }
-        .placeholder-class-1031 { content: ''; }
-        .placeholder-class-1032 { content: ''; }
-        .placeholder-class-1033 { content: ''; }
-        .placeholder-class-1034 { content: ''; }
-        .placeholder-class-1035 { content: ''; }
-        .placeholder-class-1036 { content: ''; }
-        .placeholder-class-1037 { content: ''; }
-        .placeholder-class-1038 { content: ''; }
-        .placeholder-class-1039 { content: ''; }
-        .placeholder-class-1040 { content: ''; }
-        .placeholder-class-1041 { content: ''; }
-        .placeholder-class-1042 { content: ''; }
-        .placeholder-class-1043 { content: ''; }
-        .placeholder-class-1044 { content: ''; }
-        .placeholder-class-1045 { content: ''; }
-        .placeholder-class-1046 { content: ''; }
-        .placeholder-class-1047 { content: ''; }
-        .placeholder-class-1048 { content: ''; }
-        .placeholder-class-1049 { content: ''; }
-        .placeholder-class-1050 { content: ''; }
-        .placeholder-class-1051 { content: ''; }
-        .placeholder-class-1052 { content: ''; }
-        .placeholder-class-1053 { content: ''; }
-        .placeholder-class-1054 { content: ''; }
-        .placeholder-class-1055 { content: ''; }
-        .placeholder-class-1056 { content: ''; }
-        .placeholder-class-1057 { content: ''; }
-        .placeholder-class-1058 { content: ''; }
-        .placeholder-class-1059 { content: ''; }
-        .placeholder-class-1060 { content: ''; }
-        .placeholder-class-1061 { content: ''; }
-        .placeholder-class-1062 { content: ''; }
-        .placeholder-class-1063 { content: ''; }
-        .placeholder-class-1064 { content: ''; }
-        .placeholder-class-1065 { content: ''; }
-        .placeholder-class-1066 { content: ''; }
-        .placeholder-class-1067 { content: ''; }
-        .placeholder-class-1068 { content: ''; }
-        .placeholder-class-1069 { content: ''; }
-        .placeholder-class-1070 { content: ''; }
-        .placeholder-class-1071 { content: ''; }
-        .placeholder-class-1072 { content: ''; }
-        .placeholder-class-1073 { content: ''; }
-        .placeholder-class-1074 { content: ''; }
-        .placeholder-class-1075 { content: ''; }
-        .placeholder-class-1076 { content: ''; }
-        .placeholder-class-1077 { content: ''; }
-        .placeholder-class-1078 { content: ''; }
-        .placeholder-class-1079 { content: ''; }
-        .placeholder-class-1080 { content: ''; }
-        .placeholder-class-1081 { content: ''; }
-        .placeholder-class-1082 { content: ''; }
-        .placeholder-class-1083 { content: ''; }
-        .placeholder-class-1084 { content: ''; }
-        .placeholder-class-1085 { content: ''; }
-        .placeholder-class-1086 { content: ''; }
-        .placeholder-class-1087 { content: ''; }
-        .placeholder-class-1088 { content: ''; }
-        .placeholder-class-1089 { content: ''; }
-        .placeholder-class-1090 { content: ''; }
-        .placeholder-class-1091 { content: ''; }
-        .placeholder-class-1092 { content: ''; }
-        .placeholder-class-1093 { content: ''; }
-        .placeholder-class-1094 { content: ''; }
-        .placeholder-class-1095 { content: ''; }
-        .placeholder-class-1096 { content: ''; }
-        .placeholder-class-1097 { content: ''; }
-        .placeholder-class-1098 { content: ''; }
-        .placeholder-class-1099 { content: ''; }
-        .placeholder-class-1100 { content: ''; }
-        .placeholder-class-1101 { content: ''; }
-        .placeholder-class-1102 { content: ''; }
-        .placeholder-class-1103 { content: ''; }
-        .placeholder-class-1104 { content: ''; }
-        .placeholder-class-1105 { content: ''; }
-        .placeholder-class-1106 { content: ''; }
-        .placeholder-class-1107 { content: ''; }
-        .placeholder-class-1108 { content: ''; }
-        .placeholder-class-1109 { content: ''; }
-        .placeholder-class-1110 { content: ''; }
-        .placeholder-class-1111 { content: ''; }
-        .placeholder-class-1112 { content: ''; }
-        .placeholder-class-1113 { content: ''; }
-        .placeholder-class-1114 { content: ''; }
-        .placeholder-class-1115 { content: ''; }
-        .placeholder-class-1116 { content: ''; }
-        .placeholder-class-1117 { content: ''; }
-        .placeholder-class-1118 { content: ''; }
-        .placeholder-class-1119 { content: ''; }
-        .placeholder-class-1120 { content: ''; }
-        .placeholder-class-1121 { content: ''; }
-        .placeholder-class-1122 { content: ''; }
-        .placeholder-class-1123 { content: ''; }
-        .placeholder-class-1124 { content: ''; }
-        .placeholder-class-1125 { content: ''; }
-        .placeholder-class-1126 { content: ''; }
-        .placeholder-class-1127 { content: ''; }
-        .placeholder-class-1128 { content: ''; }
-        .placeholder-class-1129 { content: ''; }
-        .placeholder-class-1130 { content: ''; }
-        .placeholder-class-1131 { content: ''; }
-        .placeholder-class-1132 { content: ''; }
-        .placeholder-class-1133 { content: ''; }
-        .placeholder-class-1134 { content: ''; }
-        .placeholder-class-1135 { content: ''; }
-        .placeholder-class-1136 { content: ''; }
-        .placeholder-class-1137 { content: ''; }
-        .placeholder-class-1138 { content: ''; }
-        .placeholder-class-1139 { content: ''; }
-        .placeholder-class-1140 { content: ''; }
-        .placeholder-class-1141 { content: ''; }
-        .placeholder-class-1142 { content: ''; }
-        .placeholder-class-1143 { content: ''; }
-        .placeholder-class-1144 { content: ''; }
-        .placeholder-class-1145 { content: ''; }
-        .placeholder-class-1146 { content: ''; }
-        .placeholder-class-1147 { content: ''; }
-        .placeholder-class-1148 { content: ''; }
-        .placeholder-class-1149 { content: ''; }
-        .placeholder-class-1150 { content: ''; }
-        .placeholder-class-1151 { content: ''; }
-        .placeholder-class-1152 { content: ''; }
-        .placeholder-class-1153 { content: ''; }
-        .placeholder-class-1154 { content: ''; }
-        .placeholder-class-1155 { content: ''; }
-        .placeholder-class-1156 { content: ''; }
-        .placeholder-class-1157 { content: ''; }
-        .placeholder-class-1158 { content: ''; }
-        .placeholder-class-1159 { content: ''; }
-        .placeholder-class-1160 { content: ''; }
-        .placeholder-class-1161 { content: ''; }
-        .placeholder-class-1162 { content: ''; }
-        .placeholder-class-1163 { content: ''; }
-        .placeholder-class-1164 { content: ''; }
-        .placeholder-class-1165 { content: ''; }
-        .placeholder-class-1166 { content: ''; }
-        .placeholder-class-1167 { content: ''; }
-        .placeholder-class-1168 { content: ''; }
-        .placeholder-class-1169 { content: ''; }
-        .placeholder-class-1170 { content: ''; }
-        .placeholder-class-1171 { content: ''; }
-        .placeholder-class-1172 { content: ''; }
-        .placeholder-class-1173 { content: ''; }
-        .placeholder-class-1174 { content: ''; }
-        .placeholder-class-1175 { content: ''; }
-        .placeholder-class-1176 { content: ''; }
-        .placeholder-class-1177 { content: ''; }
-        .placeholder-class-1178 { content: ''; }
-        .placeholder-class-1179 { content: ''; }
-        .placeholder-class-1180 { content: ''; }
-        .placeholder-class-1181 { content: ''; }
-        .placeholder-class-1182 { content: ''; }
-        .placeholder-class-1183 { content: ''; }
-        .placeholder-class-1184 { content: ''; }
-        .placeholder-class-1185 { content: ''; }
-        .placeholder-class-1186 { content: ''; }
-        .placeholder-class-1187 { content: ''; }
-        .placeholder-class-1188 { content: ''; }
-        .placeholder-class-1189 { content: ''; }
-        .placeholder-class-1190 { content: ''; }
-        .placeholder-class-1191 { content: ''; }
-        .placeholder-class-1192 { content: ''; }
-        .placeholder-class-1193 { content: ''; }
-        .placeholder-class-1194 { content: ''; }
-        .placeholder-class-1195 { content: ''; }
-        .placeholder-class-1196 { content: ''; }
-        .placeholder-class-1197 { content: ''; }
-        .placeholder-class-1198 { content: ''; }
-        .placeholder-class-1199 { content: ''; }
-        .placeholder-class-1200 { content: ''; }
-        .placeholder-class-1201 { content: ''; }
-        .placeholder-class-1202 { content: ''; }
-        .placeholder-class-1203 { content: ''; }
-        .placeholder-class-1204 { content: ''; }
-        .placeholder-class-1205 { content: ''; }
-        .placeholder-class-1206 { content: ''; }
-        .placeholder-class-1207 { content: ''; }
-        .placeholder-class-1208 { content: ''; }
-        .placeholder-class-1209 { content: ''; }
-        .placeholder-class-1210 { content: ''; }
-        .placeholder-class-1211 { content: ''; }
-        .placeholder-class-1212 { content: ''; }
-        .placeholder-class-1213 { content: ''; }
-        .placeholder-class-1214 { content: ''; }
-        .placeholder-class-1215 { content: ''; }
-        .placeholder-class-1216 { content: ''; }
-        .placeholder-class-1217 { content: ''; }
-        .placeholder-class-1218 { content: ''; }
-        .placeholder-class-1219 { content: ''; }
-        .placeholder-class-1220 { content: ''; }
-        .placeholder-class-1221 { content: ''; }
-        .placeholder-class-1222 { content: ''; }
-        .placeholder-class-1223 { content: ''; }
-        .placeholder-class-1224 { content: ''; }
-        .placeholder-class-1225 { content: ''; }
-        .placeholder-class-1226 { content: ''; }
-        .placeholder-class-1227 { content: ''; }
-        .placeholder-class-1228 { content: ''; }
-        .placeholder-class-1229 { content: ''; }
-        .placeholder-class-1230 { content: ''; }
-        .placeholder-class-1231 { content: ''; }
-        .placeholder-class-1232 { content: ''; }
-        .placeholder-class-1233 { content: ''; }
-        .placeholder-class-1234 { content: ''; }
-        .placeholder-class-1235 { content: ''; }
-        .placeholder-class-1236 { content: ''; }
-        .placeholder-class-1237 { content: ''; }
-        .placeholder-class-1238 { content: ''; }
-        .placeholder-class-1239 { content: ''; }
-        .placeholder-class-1240 { content: ''; }
-        .placeholder-class-1241 { content: ''; }
-        .placeholder-class-1242 { content: ''; }
-        .placeholder-class-1243 { content: ''; }
-        .placeholder-class-1244 { content: ''; }
-        .placeholder-class-1245 { content: ''; }
-        .placeholder-class-1246 { content: ''; }
-        .placeholder-class-1247 { content: ''; }
-        .placeholder-class-1248 { content: ''; }
-        .placeholder-class-1249 { content: ''; }
-        .placeholder-class-1250 { content: ''; }
-        .placeholder-class-1251 { content: ''; }
-        .placeholder-class-1252 { content: ''; }
-        .placeholder-class-1253 { content: ''; }
-        .placeholder-class-1254 { content: ''; }
-        .placeholder-class-1255 { content: ''; }
-        .placeholder-class-1256 { content: ''; }
-        .placeholder-class-1257 { content: ''; }
-        .placeholder-class-1258 { content: ''; }
-        .placeholder-class-1259 { content: ''; }
-        .placeholder-class-1260 { content: ''; }
-        .placeholder-class-1261 { content: ''; }
-        .placeholder-class-1262 { content: ''; }
-        .placeholder-class-1263 { content: ''; }
-        .placeholder-class-1264 { content: ''; }
-        .placeholder-class-1265 { content: ''; }
-        .placeholder-class-1266 { content: ''; }
-        .placeholder-class-1267 { content: ''; }
-        .placeholder-class-1268 { content: ''; }
-        .placeholder-class-1269 { content: ''; }
-        .placeholder-class-1270 { content: ''; }
-        .placeholder-class-1271 { content: ''; }
-        .placeholder-class-1272 { content: ''; }
-        .placeholder-class-1273 { content: ''; }
-        .placeholder-class-1274 { content: ''; }
-        .placeholder-class-1275 { content: ''; }
-        .placeholder-class-1276 { content: ''; }
-        .placeholder-class-1277 { content: ''; }
-        .placeholder-class-1278 { content: ''; }
-        .placeholder-class-1279 { content: ''; }
-        .placeholder-class-1280 { content: ''; }
-        .placeholder-class-1281 { content: ''; }
-        .placeholder-class-1282 { content: ''; }
-        .placeholder-class-1283 { content: ''; }
-        .placeholder-class-1284 { content: ''; }
-        .placeholder-class-1285 { content: ''; }
-        .placeholder-class-1286 { content: ''; }
-        .placeholder-class-1287 { content: ''; }
-        .placeholder-class-1288 { content: ''; }
-        .placeholder-class-1289 { content: ''; }
-        .placeholder-class-1290 { content: ''; }
-        .placeholder-class-1291 { content: ''; }
-        .placeholder-class-1292 { content: ''; }
-        .placeholder-class-1293 { content: ''; }
-        .placeholder-class-1294 { content: ''; }
-        .placeholder-class-1295 { content: ''; }
-        .placeholder-class-1296 { content: ''; }
-        .placeholder-class-1297 { content: ''; }
-        .placeholder-class-1298 { content: ''; }
-        .placeholder-class-1299 { content: ''; }
-        .placeholder-class-1300 { content: ''; }
-        .placeholder-class-1301 { content: ''; }
-        .placeholder-class-1302 { content: ''; }
-        .placeholder-class-1303 { content: ''; }
-        .placeholder-class-1304 { content: ''; }
-        .placeholder-class-1305 { content: ''; }
-        .placeholder-class-1306 { content: ''; }
-        .placeholder-class-1307 { content: ''; }
-        .placeholder-class-1308 { content: ''; }
-        .placeholder-class-1309 { content: ''; }
-        .placeholder-class-1310 { content: ''; }
-        .placeholder-class-1311 { content: ''; }
-        .placeholder-class-1312 { content: ''; }
-        .placeholder-class-1313 { content: ''; }
-        .placeholder-class-1314 { content: ''; }
-        .placeholder-class-1315 { content: ''; }
-        .placeholder-class-1316 { content: ''; }
-        .placeholder-class-1317 { content: ''; }
-        .placeholder-class-1318 { content: ''; }
-        .placeholder-class-1319 { content: ''; }
-        .placeholder-class-1320 { content: ''; }
-        .placeholder-class-1321 { content: ''; }
-        .placeholder-class-1322 { content: ''; }
-        .placeholder-class-1323 { content: ''; }
-        .placeholder-class-1324 { content: ''; }
-        .placeholder-class-1325 { content: ''; }
-        .placeholder-class-1326 { content: ''; }
-        .placeholder-class-1327 { content: ''; }
-        .placeholder-class-1328 { content: ''; }
-        .placeholder-class-1329 { content: ''; }
-        .placeholder-class-1330 { content: ''; }
-        .placeholder-class-1331 { content: ''; }
-        .placeholder-class-1332 { content: ''; }
-        .placeholder-class-1333 { content: ''; }
-        .placeholder-class-1334 { content: ''; }
-        .placeholder-class-1335 { content: ''; }
-        .placeholder-class-1336 { content: ''; }
-        .placeholder-class-1337 { content: ''; }
-        .placeholder-class-1338 { content: ''; }
-        .placeholder-class-1339 { content: ''; }
-        .placeholder-class-1340 { content: ''; }
-        .placeholder-class-1341 { content: ''; }
-        .placeholder-class-1342 { content: ''; }
-        .placeholder-class-1343 { content: ''; }
-        .placeholder-class-1344 { content: ''; }
-        .placeholder-class-1345 { content: ''; }
-        .placeholder-class-1346 { content: ''; }
-        .placeholder-class-1347 { content: ''; }
-        .placeholder-class-1348 { content: ''; }
-        .placeholder-class-1349 { content: ''; }
-        .placeholder-class-1350 { content: ''; }
-        .placeholder-class-1351 { content: ''; }
-        .placeholder-class-1352 { content: ''; }
-        .placeholder-class-1353 { content: ''; }
-        .placeholder-class-1354 { content: ''; }
-        .placeholder-class-1355 { content: ''; }
-        .placeholder-class-1356 { content: ''; }
-        .placeholder-class-1357 { content: ''; }
-        .placeholder-class-1358 { content: ''; }
-        .placeholder-class-1359 { content: ''; }
-        .placeholder-class-1360 { content: ''; }
-        .placeholder-class-1361 { content: ''; }
-        .placeholder-class-1362 { content: ''; }
-        .placeholder-class-1363 { content: ''; }
-        .placeholder-class-1364 { content: ''; }
-        .placeholder-class-1365 { content: ''; }
-        .placeholder-class-1366 { content: ''; }
-        .placeholder-class-1367 { content: ''; }
-        .placeholder-class-1368 { content: ''; }
-        .placeholder-class-1369 { content: ''; }
-        .placeholder-class-1370 { content: ''; }
-        .placeholder-class-1371 { content: ''; }
-        .placeholder-class-1372 { content: ''; }
-        .placeholder-class-1373 { content: ''; }
-        .placeholder-class-1374 { content: ''; }
-        .placeholder-class-1375 { content: ''; }
-        .placeholder-class-1376 { content: ''; }
-        .placeholder-class-1377 { content: ''; }
-        .placeholder-class-1378 { content: ''; }
-        .placeholder-class-1379 { content: ''; }
-        .placeholder-class-1380 { content: ''; }
-        .placeholder-class-1381 { content: ''; }
-        .placeholder-class-1382 { content: ''; }
-        .placeholder-class-1383 { content: ''; }
-        .placeholder-class-1384 { content: ''; }
-        .placeholder-class-1385 { content: ''; }
-        .placeholder-class-1386 { content: ''; }
-        .placeholder-class-1387 { content: ''; }
-        .placeholder-class-1388 { content: ''; }
-        .placeholder-class-1389 { content: ''; }
-        .placeholder-class-1390 { content: ''; }
-        .placeholder-class-1391 { content: ''; }
-        .placeholder-class-1392 { content: ''; }
-        .placeholder-class-1393 { content: ''; }
-        .placeholder-class-1394 { content: ''; }
-        .placeholder-class-1395 { content: ''; }
-        .placeholder-class-1396 { content: ''; }
-        .placeholder-class-1397 { content: ''; }
-        .placeholder-class-1398 { content: ''; }
-        .placeholder-class-1399 { content: ''; }
-        .placeholder-class-1400 { content: ''; }
-        .placeholder-class-1401 { content: ''; }
-        .placeholder-class-1402 { content: ''; }
-        .placeholder-class-1403 { content: ''; }
-        .placeholder-class-1404 { content: ''; }
-        .placeholder-class-1405 { content: ''; }
-        .placeholder-class-1406 { content: ''; }
-        .placeholder-class-1407 { content: ''; }
-        .placeholder-class-1408 { content: ''; }
-        .placeholder-class-1409 { content: ''; }
-        .placeholder-class-1410 { content: ''; }
-        .placeholder-class-1411 { content: ''; }
-        .placeholder-class-1412 { content: ''; }
-        .placeholder-class-1413 { content: ''; }
-        .placeholder-class-1414 { content: ''; }
-        .placeholder-class-1415 { content: ''; }
-        .placeholder-class-1416 { content: ''; }
-        .placeholder-class-1417 { content: ''; }
-        .placeholder-class-1418 { content: ''; }
-        .placeholder-class-1419 { content: ''; }
-        .placeholder-class-1420 { content: ''; }
-        .placeholder-class-1421 { content: ''; }
-        .placeholder-class-1422 { content: ''; }
-        .placeholder-class-1423 { content: ''; }
-        .placeholder-class-1424 { content: ''; }
-        .placeholder-class-1425 { content: ''; }
-        .placeholder-class-1426 { content: ''; }
-        .placeholder-class-1427 { content: ''; }
-        .placeholder-class-1428 { content: ''; }
-        .placeholder-class-1429 { content: ''; }
-        .placeholder-class-1430 { content: ''; }
-        .placeholder-class-1431 { content: ''; }
-        .placeholder-class-1432 { content: ''; }
-        .placeholder-class-1433 { content: ''; }
-        .placeholder-class-1434 { content: ''; }
-        .placeholder-class-1435 { content: ''; }
-        .placeholder-class-1436 { content: ''; }
-        .placeholder-class-1437 { content: ''; }
-        .placeholder-class-1438 { content: ''; }
-        .placeholder-class-1439 { content: ''; }
-        .placeholder-class-1440 { content: ''; }
-        .placeholder-class-1441 { content: ''; }
-        .placeholder-class-1442 { content: ''; }
-        .placeholder-class-1443 { content: ''; }
-        .placeholder-class-1444 { content: ''; }
-        .placeholder-class-1445 { content: ''; }
-        .placeholder-class-1446 { content: ''; }
-        .placeholder-class-1447 { content: ''; }
-        .placeholder-class-1448 { content: ''; }
-        .placeholder-class-1449 { content: ''; }
-        .placeholder-class-1450 { content: ''; }
-        .placeholder-class-1451 { content: ''; }
-        .placeholder-class-1452 { content: ''; }
-        .placeholder-class-1453 { content: ''; }
-        .placeholder-class-1454 { content: ''; }
-        .placeholder-class-1455 { content: ''; }
-        .placeholder-class-1456 { content: ''; }
-        .placeholder-class-1457 { content: ''; }
-        .placeholder-class-1458 { content: ''; }
-        .placeholder-class-1459 { content: ''; }
-        .placeholder-class-1460 { content: ''; }
-        .placeholder-class-1461 { content: ''; }
-        .placeholder-class-1462 { content: ''; }
-        .placeholder-class-1463 { content: ''; }
-        .placeholder-class-1464 { content: ''; }
-        .placeholder-class-1465 { content: ''; }
-        .placeholder-class-1466 { content: ''; }
-        .placeholder-class-1467 { content: ''; }
-        .placeholder-class-1468 { content: ''; }
-        .placeholder-class-1469 { content: ''; }
-        .placeholder-class-1470 { content: ''; }
-        .placeholder-class-1471 { content: ''; }
-        .placeholder-class-1472 { content: ''; }
-        .placeholder-class-1473 { content: ''; }
-        .placeholder-class-1474 { content: ''; }
-        .placeholder-class-1475 { content: ''; }
-        .placeholder-class-1476 { content: ''; }
-        .placeholder-class-1477 { content: ''; }
-        .placeholder-class-1478 { content: ''; }
-        .placeholder-class-1479 { content: ''; }
-        .placeholder-class-1480 { content: ''; }
-        .placeholder-class-1481 { content: ''; }
-        .placeholder-class-1482 { content: ''; }
-        .placeholder-class-1483 { content: ''; }
-        .placeholder-class-1484 { content: ''; }
-        .placeholder-class-1485 { content: ''; }
-        .placeholder-class-1486 { content: ''; }
-        .placeholder-class-1487 { content: ''; }
-        .placeholder-class-1488 { content: ''; }
-        .placeholder-class-1489 { content: ''; }
-        .placeholder-class-1490 { content: ''; }
-        .placeholder-class-1491 { content: ''; }
-        .placeholder-class-1492 { content: ''; }
-        .placeholder-class-1493 { content: ''; }
-        .placeholder-class-1494 { content: ''; }
-        .placeholder-class-1495 { content: ''; }
-        .placeholder-class-1496 { content: ''; }
-        .placeholder-class-1497 { content: ''; }
-        .placeholder-class-1498 { content: ''; }
-        .placeholder-class-1499 { content: ''; }
-        .placeholder-class-1500 { content: ''; }
-        /* Continuing placeholders up to ~5000 lines total - truncated for brevity in this response, but in full code would continue similarly */
-        .placeholder-class-4999 { content: ''; }
-        .placeholder-class-5000 { content: ''; }
+        input, select, textarea {
+            width: 100%;
+            padding: var(--theme-spacing-small) var(--theme-spacing-medium);
+            margin-bottom: var(--theme-spacing-medium);
+            background: rgba(0,0,0,0.05);
+            border: 1px solid var(--theme-border);
+            border-radius: 12px;
+            color: var(--theme-text);
+            font-size: var(--theme-font-size-small);
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .light-theme input, .light-theme select, .light-theme textarea {
+            background: #f5f5f5;
+        }
     </style>
 </head>
 <body>
     <div id="progress-bar"></div>
     <canvas id="star-canvas"></canvas>
-    
+   
     <!-- Auth Gate -->
     <div id="auth-gate">
         <div class="gate-logo">NEXUS GRAM</div>
         <p style="color:var(--theme-text-dim); margin-bottom:30px; letter-spacing:2px;">COSMIC SOCIAL PROTOCOL</p>
-        <button class="btn-primary" style="width:250px;" onclick="handleLogin()">INITIALIZE SYNC</button>
+        <button class="btn-primary" onclick="handleLogin()">INITIALIZE SYNC</button>
     </div>
-    
+   
     <!-- Identity Lock -->
     <div id="identity-lock">
         <div class="lock-box">
             <h2 style="color:var(--theme-accent); margin:0 0 10px 0;">PILOT CREDENTIALS</h2>
             <p style="color:var(--theme-text-dim); font-size:0.85rem; margin-bottom:20px;">Set up your cosmic identity.</p>
-            
+           
             <label style="font-size:0.75rem; color:var(--theme-accent);">CALLSIGN</label>
             <input type="text" id="pilot-name" placeholder="e.g. CosmicExplorer">
-            
+           
             <label style="font-size:0.75rem; color:var(--theme-accent); margin-top:12px; display:block;">STATUS</label>
             <select id="pilot-status">
                 <option value="online">🟢 Online</option>
                 <option value="away">🟡 Away</option>
                 <option value="offline">⚪ Offline</option>
             </select>
-            
+           
             <label style="font-size:0.75rem; color:var(--theme-accent); margin-top:12px; display:block;">BIO</label>
             <textarea id="pilot-bio" maxlength="160" placeholder="Your cosmic journey..."></textarea>
-            
+           
             <button class="btn-primary" onclick="submitIdentity()">LAUNCH PROFILE</button>
         </div>
     </div>
-    
+   
     <!-- App -->
     <div class="nexus-wrapper" id="app">
         <!-- Header for PC -->
@@ -1765,7 +1198,7 @@
                 <i class="fas fa-user header-icon" onclick="navigate('profile')"></i>
             </div>
         </header>
-        
+       
         <!-- Sidebar for PC -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-icon" onclick="navigate('home')">
@@ -1792,7 +1225,7 @@
                 </div>
             </div>
         </aside>
-        
+       
         <!-- Main Content -->
         <main class="main-content">
             <!-- Home View -->
@@ -1800,13 +1233,13 @@
                 <div class="stories-bar" id="stories-bar"></div>
                 <div id="feed" class="feed"></div>
             </div>
-            
+           
             <!-- Search View -->
             <div id="search-view" class="content-view">
                 <input type="text" class="search-input" id="search-input" placeholder="Search users...">
                 <div id="search-results" class="search-results"></div>
             </div>
-            
+           
             <!-- Messages View -->
             <div id="messages-view" class="content-view">
                 <div id="messages-list" class="messages-list"></div>
@@ -1822,14 +1255,14 @@
                     </div>
                 </div>
             </div>
-            
+           
             <!-- Profile View -->
             <div id="profile-view" class="content-view">
                 <div class="profile-header" id="profile-header"></div>
                 <div class="profile-posts" id="profile-posts"></div>
             </div>
         </main>
-        
+       
         <!-- Bottom Nav for Mobile -->
         <nav class="bottom-nav">
             <i class="fas fa-home nav-icon" onclick="navigate('home')"></i>
@@ -1839,7 +1272,7 @@
             <i class="fas fa-user nav-icon" onclick="navigate('profile')"></i>
         </nav>
     </div>
-    
+   
     <!-- Publish Modal -->
     <div id="publish-modal">
         <div class="publish-box">
@@ -1853,8 +1286,12 @@
             </div>
         </div>
     </div>
-    
-    <script>
+   
+    <script type="module">
+        const { initializeApp, getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } = window.firebaseModules;
+        const { getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot, query, where, orderBy, limit, runTransaction, serverTimestamp, getDocs } = window.firebaseModules;
+        const { getStorage, ref: storageRef, uploadBytes, getDownloadURL } = window.firebaseModules;
+
         // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyAxbBOThZxG5W_R1i0zVmh-TxzWOE1uDhM",
@@ -1864,18 +1301,18 @@
             messagingSenderId: "70656136344",
             appId: "1:70656136344:web:640193b83f63cac569aced"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        const storage = firebase.storage();
-        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+       
         let currentUser = null;
         let activeView = 'home';
         let activeMessageThread = null;
         let unsubscribers = {};
         let userCache = new Map();
         let postCache = new Map();
-        
+       
         // Theme Toggle
         function toggleTheme() {
             document.body.classList.toggle('light-theme');
@@ -1884,16 +1321,16 @@
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-theme');
         }
-        
+       
         // Auth Functions - Improved error handling
         async function handleLogin() {
             const btn = document.querySelector('#auth-gate .btn-primary');
             btn.innerHTML = 'CONNECTING...';
             btn.disabled = true;
             try {
-                const provider = new firebase.auth.GoogleAuthProvider();
+                const provider = new GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
-                const result = await auth.signInWithPopup(provider);
+                const result = await signInWithPopup(auth, provider);
                 console.log("Login success:", result.user.email);
             } catch (err) {
                 let msg = "Login failed";
@@ -1908,12 +1345,12 @@
                 btn.disabled = false;
             }
         }
-        
-        auth.onAuthStateChanged(async user => {
+       
+        onAuthStateChanged(auth, async user => {
             if (user) {
                 currentUser = user;
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (!userDoc.exists || !userDoc.data().name) {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (!userDoc.exists() || !userDoc.data().name) {
                     document.getElementById('auth-gate').style.display = 'none';
                     document.getElementById('identity-lock').style.display = 'flex';
                     document.getElementById('app').style.display = 'none';
@@ -1929,14 +1366,14 @@
                 document.getElementById('app').style.display = 'none';
             }
         });
-        
+       
         async function submitIdentity() {
             const name = document.getElementById('pilot-name').value.trim();
             const status = document.getElementById('pilot-status').value;
             const bio = document.getElementById('pilot-bio').value.trim() || 'No bio yet';
             if (name.length < 3) return alert("Callsign too short.");
             try {
-                await db.collection('users').doc(currentUser.uid).set({
+                await setDoc(doc(db, 'users', currentUser.uid), {
                     uid: currentUser.uid,
                     name,
                     status,
@@ -1944,7 +1381,7 @@
                     avatarUrl: currentUser.photoURL || null,
                     followers: [],
                     following: [],
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    lastSeen: serverTimestamp()
                 }, { merge: true });
                 document.getElementById('identity-lock').style.display = 'none';
                 document.getElementById('app').style.display = 'flex';
@@ -1953,11 +1390,11 @@
                 alert("Error: " + err.message);
             }
         }
-        
+       
         function handleLogout() {
-            auth.signOut();
+            signOut(auth);
         }
-        
+       
         // Load App
         function loadApp() {
             loadStories();
@@ -1966,7 +1403,7 @@
             loadProfile();
             navigate('home');
         }
-        
+       
         // Navigation
         function navigate(view) {
             activeView = view;
@@ -1979,31 +1416,415 @@
             if (view === 'messages') backToMessagesList();
             if (view === 'profile') loadProfile();
         }
-        
+       
+        // Utility: Debounce
+        function debounce(func, delay) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => func(...args), delay);
+            };
+        }
+       
+        // User Data Cache
+        async function getUserData(uid) {
+            if (userCache.has(uid)) return userCache.get(uid);
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                userCache.set(uid, data);
+                return data;
+            }
+            return null;
+        }
+       
         // Stories
-        function loadStories() {
+        async function loadStories() {
             const bar = document.getElementById('stories-bar');
-            bar.innerHTML = '<div class="loading-spinner"></div>';
-            // Mock or real stories
             bar.innerHTML = '';
+            // My story
             const myStory = document.createElement('div');
             myStory.className = 'story-circle';
             myStory.innerHTML = `<div class="story-avatar"><i class="fas fa-plus"></i></div>`;
             myStory.onclick = () => alert('Add story coming soon');
             bar.appendChild(myStory);
-            // Load others...
+            // Others
+            const user = await getUserData(currentUser.uid);
+            const following = user.following || [];
+            for (let uid of following) {
+                const followedUser = await getUserData(uid);
+                if (followedUser) {
+                    const story = document.createElement('div');
+                    story.className = 'story-circle';
+                    story.innerHTML = `<div class="story-avatar"><img src="${followedUser.avatarUrl || 'https://via.placeholder.com/54'}"></div>`;
+                    story.onclick = () => alert('View story coming soon');
+                    bar.appendChild(story);
+                }
+            }
         }
-        
+       
         // Feed
+        let posts = [];
         function loadFeed() {
             const feed = document.getElementById('feed');
             feed.innerHTML = '<div class="loading-spinner"></div>';
-            // Real feed loading...
+            if (unsubscribers['feed']) unsubscribers['feed']();
+            const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(20));
+            unsubscribers['feed'] = onSnapshot(q, snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const post = change.doc.data();
+                        post.id = change.doc.id;
+                        posts.unshift(post);
+                    } else if (change.type === 'modified') {
+                        const index = posts.findIndex(p => p.id === change.doc.id);
+                        if (index > -1) posts[index] = { ...change.doc.data(), id: change.doc.id };
+                    } else if (change.type === 'removed') {
+                        posts = posts.filter(p => p.id !== change.doc.id);
+                    }
+                });
+                renderAllPosts();
+            });
         }
-        
-        // Other functions...
-        // (truncated for brevity - full implementation would be here)
-        
+       
+        function renderAllPosts() {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '';
+            posts.forEach(renderPost);
+        }
+       
+        async function renderPost(post) {
+            const user = await getUserData(post.userId);
+            if (!user) return;
+            const card = document.createElement('div');
+            card.className = 'post-card';
+            card.innerHTML = `
+                <div class="post-header">
+                    <div class="post-avatar"><img src="${user.avatarUrl || 'https://via.placeholder.com/40'}"></div>
+                    <span class="post-username">${user.name}</span>
+                    <span class="post-time">${post.timestamp ? new Date(post.timestamp.toDate()).toLocaleString() : 'Just now'}</span>
+                </div>
+                ${post.imageUrl ? `<img class="post-image" src="${post.imageUrl}">` : ''}
+                <div class="post-actions">
+                    <i class="fas fa-heart action-btn ${post.likes?.includes(currentUser.uid) ? 'liked' : ''}" onclick="toggleLike('${post.id}')"></i>
+                    <i class="fas fa-comment action-btn" onclick="focusComment('${post.id}')"></i>
+                    <i class="fas fa-share action-btn" onclick="sharePost('${post.id}')"></i>
+                </div>
+                <div class="post-caption">${post.caption || ''}</div>
+                <div class="post-comments" id="comments-${post.id}"></div>
+                <div class="comment-input">
+                    <input type="text" placeholder="Add a comment..." id="comment-input-${post.id}">
+                    <i class="fas fa-paper-plane comment-send" onclick="addComment('${post.id}')"></i>
+                </div>
+            `;
+            document.getElementById('feed').appendChild(card);
+            // Render comments
+            const commentsContainer = document.getElementById(`comments-${post.id}`);
+            for (let c of post.comments || []) {
+                const commentUser = await getUserData(c.userId);
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'comment';
+                commentDiv.innerHTML = `
+                    <div class="comment-avatar"><img src="${commentUser?.avatarUrl || 'https://via.placeholder.com/30'}"></div>
+                    <div class="comment-content">
+                        <span class="comment-username">${commentUser?.name || 'Anonymous'}</span>
+                        <span class="comment-text">${c.text}</span>
+                    </div>
+                `;
+                commentsContainer.appendChild(commentDiv);
+            }
+        }
+       
+        async function toggleLike(postId) {
+            const postRef = doc(db, 'posts', postId);
+            await runTransaction(db, async (transaction) => {
+                const postDoc = await transaction.get(postRef);
+                if (!postDoc.exists()) throw "Post does not exist!";
+                let likes = postDoc.data().likes || [];
+                if (likes.includes(currentUser.uid)) {
+                    likes = likes.filter(id => id !== currentUser.uid);
+                } else {
+                    likes.push(currentUser.uid);
+                }
+                transaction.update(postRef, { likes });
+            });
+        }
+       
+        async function addComment(postId) {
+            const input = document.getElementById(`comment-input-${postId}`);
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            await updateDoc(doc(db, 'posts', postId), {
+                comments: arrayUnion({
+                    userId: currentUser.uid,
+                    text,
+                    timestamp: serverTimestamp()
+                })
+            });
+        }
+       
+        function focusComment(postId) {
+            document.getElementById(`comment-input-${postId}`).focus();
+        }
+       
+        function sharePost(postId) {
+            alert('Share coming soon');
+        }
+       
+        // Publish Post
+        function openPublishModal() {
+            document.getElementById('post-caption').value = '';
+            document.getElementById('post-image-preview').style.display = 'none';
+            document.getElementById('post-image-preview').src = '';
+            document.getElementById('publish-modal').style.display = 'flex';
+        }
+       
+        function previewPostImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('post-image-preview').src = e.target.result;
+                    document.getElementById('post-image-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+       
+        async function publishPost() {
+            const caption = document.getElementById('post-caption').value.trim();
+            const file = document.getElementById('post-image-upload').files[0];
+            if (!caption && !file) return alert('Add caption or image');
+            document.getElementById('publish-modal').style.display = 'none';
+            let imageUrl = null;
+            if (file) {
+                const storageReference = storageRef(storage, `posts/${currentUser.uid}/${Date.now()}`);
+                await uploadBytes(storageReference, file);
+                imageUrl = await getDownloadURL(storageReference);
+            }
+            await addDoc(collection(db, 'posts'), {
+                userId: currentUser.uid,
+                caption,
+                imageUrl,
+                timestamp: serverTimestamp(),
+                likes: [],
+                comments: []
+            });
+        }
+       
+        // Messages
+        function loadMessagesList() {
+            const list = document.getElementById('messages-list');
+            list.innerHTML = '<div class="loading-spinner"></div>';
+            if (unsubscribers['messages']) unsubscribers['messages']();
+            const q = query(collection(db, 'conversations'), where('participants', 'array-contains', currentUser.uid), orderBy('timestamp', 'desc'));
+            unsubscribers['messages'] = onSnapshot(q, snapshot => {
+                list.innerHTML = '';
+                snapshot.forEach(convDoc => {
+                    const conv = convDoc.data();
+                    conv.id = convDoc.id;
+                    const otherUid = conv.participants.find(u => u !== currentUser.uid);
+                    getUserData(otherUid).then(user => {
+                        if (user) {
+                            const thread = document.createElement('div');
+                            thread.className = 'message-thread';
+                            thread.innerHTML = `
+                                <div class="message-avatar"><img src="${user.avatarUrl || 'https://via.placeholder.com/50'}"></div>
+                                <div class="message-info">
+                                    <span class="message-username">${user.name}</span>
+                                    <span class="message-preview">${conv.lastMessage || 'No messages yet'}</span>
+                                </div>
+                            `;
+                            thread.onclick = () => openMessageThread(conv.id, user);
+                            list.appendChild(thread);
+                        }
+                    });
+                });
+            });
+        }
+       
+        function openMessageThread(convId, user) {
+            activeMessageThread = convId;
+            document.getElementById('message-title').innerText = user.name;
+            document.getElementById('messages-list').classList.add('hidden');
+            document.getElementById('message-view').classList.remove('hidden');
+            loadMessages(convId);
+        }
+       
+        function backToMessagesList() {
+            document.getElementById('messages-list').classList.remove('hidden');
+            document.getElementById('message-view').classList.add('hidden');
+            if (unsubscribers['thread']) unsubscribers['thread']();
+            document.getElementById('message-input-text').value = '';
+            activeMessageThread = null;
+        }
+       
+        function loadMessages(convId) {
+            const viewport = document.getElementById('message-viewport');
+            viewport.innerHTML = '';
+            const q = query(collection(db, 'conversations', convId, 'messages'), orderBy('timestamp'));
+            unsubscribers['thread'] = onSnapshot(q, snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const msg = change.doc.data();
+                        renderMessage(msg, viewport);
+                        viewport.scrollTop = viewport.scrollHeight;
+                    }
+                });
+            });
+        }
+       
+        async function renderMessage(msg, viewport) {
+            const user = await getUserData(msg.userId);
+            const bubble = document.createElement('div');
+            bubble.className = `msg-bubble ${msg.userId === currentUser.uid ? 'msg-sent' : 'msg-received'}`;
+            bubble.innerHTML = `
+                <div>${msg.text}</div>
+                <div class="msg-time">${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : 'Just now'}</div>
+            `;
+            viewport.appendChild(bubble);
+        }
+       
+        async function sendMessage() {
+            const text = document.getElementById('message-input-text').value.trim();
+            if (!text || !activeMessageThread) return;
+            document.getElementById('message-input-text').value = '';
+            const convRef = doc(db, 'conversations', activeMessageThread);
+            await runTransaction(db, async (transaction) => {
+                await transaction.set(doc(collection(convRef, 'messages')), {
+                    userId: currentUser.uid,
+                    text,
+                    timestamp: serverTimestamp()
+                });
+                transaction.update(convRef, {
+                    lastMessage: text,
+                    timestamp: serverTimestamp()
+                });
+            });
+        }
+       
+        async function startMessage(uid) {
+            if (uid === currentUser.uid) return;
+            const participants = [currentUser.uid, uid].sort();
+            const convId = participants.join('-');
+            const convRef = doc(db, 'conversations', convId);
+            const convDoc = await getDoc(convRef);
+            if (!convDoc.exists()) {
+                await setDoc(convRef, {
+                    participants,
+                    lastMessage: '',
+                    timestamp: serverTimestamp()
+                });
+            }
+            const user = await getUserData(uid);
+            openMessageThread(convId, user);
+        }
+       
+        // Search
+        function loadSearchResults() {
+            const input = document.getElementById('search-input');
+            input.oninput = debounce(async () => {
+                const queryStr = input.value.trim().toLowerCase();
+                if (!queryStr) return;
+                const results = document.getElementById('search-results');
+                results.innerHTML = '';
+                const q = query(collection(db, 'users'), where('name', '>=', queryStr), where('name', '<=', queryStr + '\uf8ff'), limit(10));
+                const snapshot = await getDocs(q);
+                const myData = await getUserData(currentUser.uid);
+                const following = myData.following || [];
+                snapshot.forEach(userDoc => {
+                    if (userDoc.id === currentUser.uid) return;
+                    const user = userDoc.data();
+                    user.uid = userDoc.id;
+                    const div = document.createElement('div');
+                    div.className = 'search-user';
+                    div.onclick = () => viewUserProfile(user.uid);
+                    div.innerHTML = `
+                        <div class="search-avatar"><img src="${user.avatarUrl || 'https://via.placeholder.com/50'}"></div>
+                        <span class="search-name">${user.name}</span>
+                        <span class="search-bio">${user.bio || ''}</span>
+                        <button class="follow-btn" onclick="toggleFollow('${user.uid}'); event.stopPropagation();">${following.includes(user.uid) ? 'Unfollow' : 'Follow'}</button>
+                        <i class="fas fa-message" style="margin-left:10px; color:var(--theme-comment); cursor:pointer;" onclick="startMessage('${user.uid}'); event.stopPropagation();"></i>
+                    `;
+                    results.appendChild(div);
+                });
+            }, 300);
+        }
+       
+        async function toggleFollow(uid) {
+            if (uid === currentUser.uid) return;
+            const myRef = doc(db, 'users', currentUser.uid);
+            const otherRef = doc(db, 'users', uid);
+            await runTransaction(db, async (transaction) => {
+                const myDoc = await transaction.get(myRef);
+                const otherDoc = await transaction.get(otherRef);
+                let myFollowing = myDoc.data().following || [];
+                let otherFollowers = otherDoc.data().followers || [];
+                if (myFollowing.includes(uid)) {
+                    myFollowing = myFollowing.filter(u => u !== uid);
+                    otherFollowers = otherFollowers.filter(u => u !== currentUser.uid);
+                } else {
+                    myFollowing.push(uid);
+                    otherFollowers.push(currentUser.uid);
+                }
+                transaction.update(myRef, { following: myFollowing });
+                transaction.update(otherRef, { followers: otherFollowers });
+            });
+            userCache.delete(currentUser.uid);
+            userCache.delete(uid);
+            // Reload relevant views
+            if (activeView === 'search') loadSearchResults();
+            if (activeView === 'profile') loadProfile();
+        }
+       
+        function viewUserProfile(uid) {
+            alert(`Viewing profile of ${uid} coming soon`);
+        }
+       
+        // Profile
+        async function loadProfile() {
+            const user = await getUserData(currentUser.uid);
+            const postCountQuery = query(collection(db, 'posts'), where('userId', '==', currentUser.uid));
+            const postCount = (await getDocs(postCountQuery)).size;
+            const header = document.getElementById('profile-header');
+            header.innerHTML = `
+                <div class="profile-avatar"><img src="${user.avatarUrl || 'https://via.placeholder.com/120'}"></div>
+                <span class="profile-name">${user.name}</span>
+                <span class="profile-bio">${user.bio}</span>
+                <div class="profile-stats">
+                    <div class="stat">
+                        <span class="stat-number">${(user.followers || []).length}</span>
+                        <span class="stat-label">Followers</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">${(user.following || []).length}</span>
+                        <span class="stat-label">Following</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">${postCount}</span>
+                        <span class="stat-label">Posts</span>
+                    </div>
+                </div>
+            `;
+            loadProfilePosts(currentUser.uid);
+        }
+       
+        async function loadProfilePosts(uid) {
+            const postsDiv = document.getElementById('profile-posts');
+            postsDiv.innerHTML = '';
+            const q = query(collection(db, 'posts'), where('userId', '==', uid), orderBy('timestamp', 'desc'));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(postDoc => {
+                const post = postDoc.data();
+                if (post.imageUrl) {
+                    const img = document.createElement('img');
+                    img.className = 'profile-post-img';
+                    img.src = post.imageUrl;
+                    postsDiv.appendChild(img);
+                }
+            });
+        }
+       
         // Star Canvas
         const canvas = document.getElementById('star-canvas');
         const ctx = canvas.getContext('2d');
@@ -2035,8 +1856,8 @@
         window.addEventListener('resize', initStars);
         initStars();
         renderStars();
-        
-        // Close modals
+       
+        // Close modals on outside click
         document.getElementById('publish-modal').addEventListener('click', e => {
             if (e.target === document.getElementById('publish-modal')) {
                 document.getElementById('publish-modal').style.display = 'none';
@@ -2045,4 +1866,5 @@
     </script>
 </body>
 </html>
+
 
