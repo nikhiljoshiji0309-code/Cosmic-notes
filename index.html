@@ -1,186 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cosmic Notes</title>
-
-<!-- PWA -->
-<link rel="manifest" href="./manifest.json" />
-<meta name="theme-color" content="#000000" />
-<link rel="icon" href="./icon-192.png" />
-
+<meta charset="UTF-8">
+<title>Cosmic Notes | Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background: #000;
-  color: #fff;
+body{
+  background:#000;color:#fff;font-family:system-ui;
+  display:flex;justify-content:center;align-items:center;height:100vh;
 }
-
-.app {
-  max-width: 420px;
-  margin: auto;
-  min-height: 100vh;
+.card{
+  width:340px;background:#111;padding:20px;border-radius:16px;
 }
-
-/* Top bar */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #222;
+input,button{
+  width:100%;padding:12px;margin-top:10px;
+  border-radius:12px;border:none;
 }
-
-.feed {
-  padding: 12px;
-}
-
-.note {
-  background: #111;
-  border-radius: 14px;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-/* Floating add button */
-.fab {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(160px);
-  width: 52px;
-  height: 52px;
-  background: #6c63ff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  cursor: pointer;
-}
-
-/* Bottom nav */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 420px;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-  border-top: 1px solid #222;
-  background: #000;
-}
-
-/* Modal */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background: #111;
-  padding: 16px;
-  border-radius: 16px;
-  width: 90%;
-}
-
-textarea {
-  width: 100%;
-  height: 100px;
-  background: #000;
-  color: #fff;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 10px;
-}
-
-button {
-  margin-top: 10px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  background: #6c63ff;
-  color: #fff;
-}
+button{background:#6c63ff;color:#fff;cursor:pointer;}
+.google{background:#222;}
 </style>
 </head>
 
 <body>
-<div class="app">
-
-  <div class="topbar">
-    <h1>🌌 Cosmic Notes</h1>
-    <span>🔔</span>
-  </div>
-
-  <div class="feed" id="feed"></div>
-
-  <div class="fab" onclick="openModal()">+</div>
-
-  <div class="bottom-nav">
-    <span>🏠</span>
-    <span>🔍</span>
-    <span>📓</span>
-    <span>👤</span>
-  </div>
+<div class="card">
+  <h2>🌌 Cosmic Notes</h2>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <input id="username" placeholder="Username (unique)">
+  <button onclick="signup()">Sign Up</button>
+  <button onclick="login()">Login</button>
+  <button class="google" onclick="googleLogin()">Continue with Google</button>
 </div>
 
-<!-- Modal -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <textarea id="noteInput" placeholder="Write a cosmic thought..."></textarea>
-    <button onclick="saveNote()">Post</button>
-    <button onclick="closeModal()" style="background:#222">Cancel</button>
-  </div>
-</div>
-
-<script defer>
-const feed = document.getElementById("feed");
-const modal = document.getElementById("modal");
-const input = document.getElementById("noteInput");
-
-function openModal() { modal.style.display = "flex"; }
-function closeModal() { modal.style.display = "none"; }
-
-function loadNotes() {
-  const notes = JSON.parse(localStorage.getItem("cosmicNotes") || "[]");
-  feed.innerHTML = "";
-  notes.slice().reverse().forEach(n => {
-    const div = document.createElement("div");
-    div.className = "note";
-    div.textContent = n;
-    feed.appendChild(div);
-  });
-}
-
-function saveNote() {
-  if (!input.value.trim()) return;
-  const notes = JSON.parse(localStorage.getItem("cosmicNotes") || "[]");
-  notes.push(input.value);
-  localStorage.setItem("cosmicNotes", JSON.stringify(notes));
-  input.value = "";
-  closeModal();
-  loadNotes();
-}
-
-loadNotes();
-
-/* Service Worker */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js");
-}
-</script>
+<script type="module" src="./auth.js"></script>
 </body>
 </html>
