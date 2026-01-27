@@ -1,37 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Cosmic Notes | Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="icon" href="./icon-192.png" />
+
 <style>
-body{
-  background:#000;color:#fff;font-family:system-ui;
-  display:flex;justify-content:center;align-items:center;height:100vh;
+* {
+  box-sizing: border-box;
 }
-.card{
-  width:340px;background:#111;padding:20px;border-radius:16px;
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-input,button{
-  width:100%;padding:12px;margin-top:10px;
-  border-radius:12px;border:none;
+
+.card {
+  width: 340px;
+  background: #111;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(108,99,255,0.15);
 }
-button{background:#6c63ff;color:#fff;cursor:pointer;}
-.google{background:#222;}
+
+h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #000;
+  color: #fff;
+  font-size: 14px;
+}
+
+input::placeholder {
+  color: #777;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #6c63ff;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.google {
+  background: #222;
+}
 </style>
 </head>
 
 <body>
+
 <div class="card">
   <h2>🌌 Cosmic Notes</h2>
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <input id="username" placeholder="Username (unique)">
+
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
+  <input id="username" placeholder="Username (unique)" />
+
   <button onclick="signup()">Sign Up</button>
   <button onclick="login()">Login</button>
   <button class="google" onclick="googleLogin()">Continue with Google</button>
 </div>
 
+<!-- IMPORTANT: MUST be module -->
 <script type="module" src="./auth.js"></script>
+
 </body>
 </html>
