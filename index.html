@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
 <title>Cosmic Notes</title>
 
 <!-- PWA -->
-<link rel="manifest" href="manifest.json" />
+<link rel="manifest" href="./manifest.json" />
 <meta name="theme-color" content="#000000" />
-<link rel="icon" href="icon-192.png" />
+<link rel="icon" href="./icon-192.png" />
 
 <style>
 * { box-sizing: border-box; }
@@ -25,7 +24,6 @@ body {
   max-width: 420px;
   margin: auto;
   min-height: 100vh;
-  position: relative;
 }
 
 /* Top bar */
@@ -37,12 +35,6 @@ body {
   border-bottom: 1px solid #222;
 }
 
-.topbar h1 {
-  font-size: 20px;
-  margin: 0;
-}
-
-/* Feed */
 .feed {
   padding: 12px;
 }
@@ -52,14 +44,14 @@ body {
   border-radius: 14px;
   padding: 12px;
   margin-bottom: 12px;
-  font-size: 15px;
 }
 
 /* Floating add button */
 .fab {
   position: fixed;
-  bottom: 70px;
-  right: calc(50% - 180px);
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(160px);
   width: 52px;
   height: 52px;
   background: #6c63ff;
@@ -75,10 +67,10 @@ body {
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
   max-width: 420px;
-  margin: auto;
   display: flex;
   justify-content: space-around;
   padding: 10px 0;
@@ -121,7 +113,6 @@ button {
   border-radius: 12px;
   background: #6c63ff;
   color: #fff;
-  font-size: 15px;
 }
 </style>
 </head>
@@ -155,7 +146,7 @@ button {
   </div>
 </div>
 
-<script>
+<script defer>
 const feed = document.getElementById("feed");
 const modal = document.getElementById("modal");
 const input = document.getElementById("noteInput");
@@ -166,7 +157,7 @@ function closeModal() { modal.style.display = "none"; }
 function loadNotes() {
   const notes = JSON.parse(localStorage.getItem("cosmicNotes") || "[]");
   feed.innerHTML = "";
-  notes.reverse().forEach(n => {
+  notes.slice().reverse().forEach(n => {
     const div = document.createElement("div");
     div.className = "note";
     div.textContent = n;
@@ -188,10 +179,8 @@ loadNotes();
 
 /* Service Worker */
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
+  navigator.serviceWorker.register("./service-worker.js");
 }
 </script>
-
 </body>
 </html>
-
