@@ -59,8 +59,13 @@ button {
 .topbar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 12px;
   border-bottom: 1px solid #222;
+}
+.topbar button {
+  width: auto;
+  margin-left: 5px;
 }
 </style>
 </head>
@@ -73,8 +78,8 @@ button {
 
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Password">
-
   <input id="displayName" placeholder="Your Name">
+  
   <button onclick="emailLogin()">Login / Signup</button>
   <button onclick="googleLogin()" style="background:#db4437">Continue with Google</button>
 </div>
@@ -83,7 +88,10 @@ button {
 <div id="app" class="app" style="display:none;">
   <div class="topbar">
     <span>🌌 Cosmic Notes</span>
-    <button onclick="logout()" style="width:auto;">Logout</button>
+    <div>
+      <button onclick="goToProfile(auth.currentUser.uid)">My Profile</button>
+      <button onclick="logout()">Logout</button>
+    </div>
   </div>
 
   <div id="feed"></div>
@@ -109,6 +117,7 @@ var firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -123,7 +132,7 @@ auth.onAuthStateChanged(user => {
     
     db.collection("users").doc(user.uid).set({
       displayName: user.displayName || document.getElementById('displayName').value || 'Cosmic User',
-      photoURL: user.photoURL || "https://i.pravatar.cc/150?img=3", // default avatar
+      photoURL: user.photoURL || "https://i.pravatar.cc/150?img=3",
       bio: "Hello! I'm cosmic.",
     }, { merge: true });
 
@@ -171,7 +180,7 @@ function postNote() {
   document.getElementById('noteInput').value = "";
 }
 
-function loadNotes() {
+async function loadNotes() {
   db.collection("notes").orderBy("time","desc")
     .onSnapshot(async snapshot => {
       feed.innerHTML = "";
@@ -182,7 +191,6 @@ function loadNotes() {
 
         const div = document.createElement("div");
         div.className = "note";
-
         div.innerHTML = `
           <div class="user">
             <img src="${userData.photoURL}" alt="avatar">
@@ -196,7 +204,7 @@ function loadNotes() {
 }
 
 function goToProfile(uid) {
-  window.location.href = `profile.html?uid=${uid}`;
+  window.location.href = uid === auth.currentUser.uid ? "myprofile.html" : `profile.html?uid=${uid}`;
 }
 </script>
 </body>
