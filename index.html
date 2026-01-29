@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Cosmic Notes</title>
 
 <link rel="manifest" href="manifest.json">
@@ -34,12 +33,28 @@ button {
   border: none;
   background: #6c63ff;
   color: #fff;
+  cursor: pointer;
 }
 .note {
   background: #111;
   padding: 12px;
   border-radius: 12px;
   margin: 10px;
+}
+.note .user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+.note .user img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+.note .user span {
+  cursor: pointer;
+  font-weight: bold;
 }
 .topbar {
   display: flex;
@@ -59,6 +74,7 @@ button {
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Password">
 
+  <input id="displayName" placeholder="Your Name">
   <button onclick="emailLogin()">Login / Signup</button>
   <button onclick="googleLogin()" style="background:#db4437">Continue with Google</button>
 </div>
@@ -93,7 +109,6 @@ var firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -103,6 +118,15 @@ const feed = document.getElementById("feed");
 
 auth.onAuthStateChanged(user => {
   if (user) {
+    // Save user info in Firestore
+    if (!user.displayName) user.updateProfile({ displayName: document.getElementById('displayName').value || 'Cosmic User' });
+    
+    db.collection("users").doc(user.uid).set({
+      displayName: user.displayName || document.getElementById('displayName').value || 'Cosmic User',
+      photoURL: user.photoURL || "https://i.pravatar.cc/150?img=3", // default avatar
+      bio: "Hello! I'm cosmic.",
+    }, { merge: true });
+
     loginDiv.style.display = "none";
     appDiv.style.display = "block";
     loadNotes();
@@ -113,12 +137,15 @@ auth.onAuthStateChanged(user => {
 });
 
 function emailLogin() {
-  const email = email.value;
-  const password = password.value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const displayName = document.getElementById('displayName').value || 'Cosmic User';
 
   auth.signInWithEmailAndPassword(email, password)
     .catch(() => {
-      auth.createUserWithEmailAndPassword(email, password);
+      auth.createUserWithEmailAndPassword(email, password).then(cred => {
+        cred.user.updateProfile({ displayName });
+      });
     });
 }
 
@@ -132,7 +159,7 @@ function logout() {
 }
 
 function postNote() {
-  const text = noteInput.value;
+  const text = document.getElementById('noteInput').value;
   if (!text) return;
 
   db.collection("notes").add({
@@ -141,22 +168,36 @@ function postNote() {
     time: Date.now()
   });
 
-  noteInput.value = "";
+  document.getElementById('noteInput').value = "";
 }
 
 function loadNotes() {
   db.collection("notes").orderBy("time","desc")
-    .onSnapshot(snapshot => {
+    .onSnapshot(async snapshot => {
       feed.innerHTML = "";
-      snapshot.forEach(doc => {
+      for (let doc of snapshot.docs) {
+        const data = doc.data();
+        const userDoc = await db.collection("users").doc(data.uid).get();
+        const userData = userDoc.data();
+
         const div = document.createElement("div");
         div.className = "note";
-        div.textContent = doc.data().text;
+
+        div.innerHTML = `
+          <div class="user">
+            <img src="${userData.photoURL}" alt="avatar">
+            <span onclick="goToProfile('${data.uid}')">${userData.displayName}</span>
+          </div>
+          <div>${data.text}</div>
+        `;
         feed.appendChild(div);
-      });
+      }
     });
 }
-</script>
 
+function goToProfile(uid) {
+  window.location.href = `profile.html?uid=${uid}`;
+}
+</script>
 </body>
 </html>
