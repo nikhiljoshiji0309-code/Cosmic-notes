@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile - Cosmic Notes</title>
+
+<style>
+body { margin:0; font-family: system-ui; background:#000; color:#fff; }
+.app { max-width:420px; margin:auto; min-height:100vh; }
+.center { text-align:center; padding:20px; }
+.note { background:#111; padding:12px; border-radius:12px; margin:10px; }
+.profile { display:flex; flex-direction:column; align-items:center; margin-top:20px; gap:10px; }
+.profile img { width:100px; height:100px; border-radius:50%; }
+input, textarea { width:100%; padding:10px; margin:5px 0; border-radius:10px; border:none; }
+button { padding:10px; border:none; border-radius:10px; background:#6c63ff; color:#fff; cursor:pointer; width:100%; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="center profile">
+    <img id="profilePic" src="" alt="Profile">
+    <input type="text" id="displayName" placeholder="Name">
+    <textarea id="bio" placeholder="Bio"></textarea>
+    <input type="text" id="photoURL" placeholder="Avatar URL">
+    <button onclick="updateProfile()">Save Profile</button>
+  </div>
+
+  <h3 style="text-align:center;">My Posts</h3>
+  <div id="userPosts"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+var firebaseConfig = {
+  apiKey: "AIzaSyAxbBOThZxG5W_R1i0zVmh-TxzWOE1uDhM",
+  authDomain: "cosmic-notes-f7648.firebaseapp.com",
+  projectId: "cosmic-notes-f7648",
+  messagingSenderId: "70656136344",
+  appId: "1:70656136344:web:640193b83f63cac569aced"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const profilePic = document.getElementById('profilePic');
+const displayName = document.getElementById('displayName');
+const bio = document.getElementById('bio');
+const photoURL = document.getElementById('photoURL');
+const userPosts = document.getElementById('userPosts');
+
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
+    loadProfile(user.uid);
+  }
+});
+
+function loadProfile(uid) {
+  db.collection('users').doc(uid).get().then(doc => {
+    const data = doc.data();
+    profilePic.src = data.photoURL;
+    displayName.value = data.displayName;
+    bio.value = data.bio;
+    photoURL.value = data.photoURL;
+  });
+
+  db.collection('notes').where('uid','==',uid).orderBy('time','desc')
+    .onSnapshot(snapshot => {
+      userPosts.innerHTML = '';
+      snapshot.forEach(doc => {
+        const div = document.createElement('div');
+        div.className = 'note';
+        div.textContent = doc.data().text;
+        userPosts.appendChild(div);
+      });
+    });
+}
+
+function updateProfile() {
+  const user = auth.currentUser;
+  db.collection('users').doc(user.uid).set({
+    displayName: displayName.value,
+    bio: bio.value,
+    photoURL: photoURL.value
+  }, { merge: true });
+
+  user.updateProfile({
+    displayName: displayName.value,
+    photoURL: photoURL.value
+  });
+
+  alert("Profile updated!");
+}
+</script>
+
+</body>
+</html>
