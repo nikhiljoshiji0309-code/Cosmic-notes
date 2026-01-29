@@ -1,224 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Cosmic Notes</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#000">
 <link rel="icon" href="icon-192.png">
 
 <style>
-* { box-sizing: border-box; }
-
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  font-family: system-ui;
   background: #000;
   color: #fff;
 }
-
-.app {
-  max-width: 420px;
-  margin: auto;
-  min-height: 100vh;
-  position: relative;
+.app { max-width: 420px; margin: auto; min-height: 100vh; }
+.center { text-align: center; padding: 20px; }
+input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
 }
-
-/* Top bar */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #6c63ff;
+  color: #fff;
+}
+.note {
+  background: #111;
+  padding: 12px;
+  border-radius: 12px;
+  margin: 10px;
+}
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
+  padding: 12px;
   border-bottom: 1px solid #222;
-}
-
-.topbar h1 {
-  font-size: 20px;
-  margin: 0;
-}
-
-/* Feed */
-.feed {
-  padding: 12px;
-}
-
-.note {
-  background: #111;
-  border-radius: 14px;
-  padding: 12px;
-  margin-bottom: 12px;
-  font-size: 15px;
-}
-
-/* Floating add button */
-.fab {
-  position: fixed;
-  bottom: 70px;
-  right: calc(50% - 180px);
-  width: 52px;
-  height: 52px;
-  background: #6c63ff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  cursor: pointer;
-}
-
-/* Bottom nav */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 420px;
-  margin: auto;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-  border-top: 1px solid #222;
-  background: #000;
-}
-
-/* Modal */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background: #111;
-  padding: 16px;
-  border-radius: 16px;
-  width: 90%;
-}
-
-textarea {
-  width: 100%;
-  height: 100px;
-  background: #000;
-  color: #fff;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 10px;
-}
-
-button {
-  margin-top: 10px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  background: #6c63ff;
-  color: #fff;
-  font-size: 15px;
 }
 </style>
 </head>
 
 <body>
-<div class="app">
 
+<!-- LOGIN SCREEN -->
+<div id="login" class="app center">
+  <h2>🌌 Cosmic Notes</h2>
+
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="emailLogin()">Login / Signup</button>
+  <button onclick="googleLogin()" style="background:#db4437">Continue with Google</button>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app" class="app" style="display:none;">
   <div class="topbar">
-    <h1>🌌 Cosmic Notes</h1>
-    <span>🔔</span>
+    <span>🌌 Cosmic Notes</span>
+    <button onclick="logout()" style="width:auto;">Logout</button>
   </div>
 
-  <div class="feed" id="feed"></div>
+  <div id="feed"></div>
 
-  <div class="fab" onclick="openModal()">+</div>
-
-  <div class="bottom-nav">
-    <span>🏠</span>
-    <span>🔍</span>
-    <span>📓</span>
-    <span>👤</span>
+  <div class="center">
+    <input id="noteInput" placeholder="Write something cosmic...">
+    <button onclick="postNote()">Post</button>
   </div>
 </div>
 
-<!-- Modal -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <textarea id="noteInput" placeholder="Write a cosmic thought..."></textarea>
-    <button onclick="saveNote()">Post</button>
-    <button onclick="closeModal()" style="background:#222">Cancel</button>
-  </div>
-</div>
-
-<!-- APP LOGIC -->
-<script>
-const feed = document.getElementById("feed");
-const modal = document.getElementById("modal");
-const input = document.getElementById("noteInput");
-
-function openModal() { modal.style.display = "flex"; }
-function closeModal() { modal.style.display = "none"; }
-
-function loadNotes() {
-  const notes = JSON.parse(localStorage.getItem("cosmicNotes") || "[]");
-  feed.innerHTML = "";
-  notes.reverse().forEach(n => {
-    const div = document.createElement("div");
-    div.className = "note";
-    div.textContent = n;
-    feed.appendChild(div);
-  });
-}
-
-function saveNote() {
-  if (!input.value.trim()) return;
-  const notes = JSON.parse(localStorage.getItem("cosmicNotes") || "[]");
-  notes.push(input.value);
-  localStorage.setItem("cosmicNotes", JSON.stringify(notes));
-  input.value = "";
-  closeModal();
-  loadNotes();
-}
-
-loadNotes();
-
-/* Service Worker */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-</script>
-
-<!-- 🔔 FIREBASE PUSH NOTIFICATIONS (STEP B COMPLETE) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
 var firebaseConfig = {
   apiKey: "AIzaSyAxbBOThZxG5W_R1i0zVmh-TxzWOE1uDhM",
   authDomain: "cosmic-notes-f7648.firebaseapp.com",
   projectId: "cosmic-notes-f7648",
-  storageBucket: "cosmic-notes-f7648.appspot.com",
   messagingSenderId: "70656136344",
   appId: "1:70656136344:web:640193b83f63cac569aced"
 };
+
 firebase.initializeApp(firebaseConfig);
 
-const messaging = firebase.messaging();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-Notification.requestPermission().then(permission => {
-  if (permission === "granted") {
-    messaging.getToken({
-      vapidKey: "YOUR_VAPID_KEY"
-    }).then(token => {
-      console.log("FCM TOKEN:", token);
-    });
+const loginDiv = document.getElementById("login");
+const appDiv = document.getElementById("app");
+const feed = document.getElementById("feed");
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loginDiv.style.display = "none";
+    appDiv.style.display = "block";
+    loadNotes();
+  } else {
+    loginDiv.style.display = "block";
+    appDiv.style.display = "none";
   }
 });
+
+function emailLogin() {
+  const email = email.value;
+  const password = password.value;
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(() => {
+      auth.createUserWithEmailAndPassword(email, password);
+    });
+}
+
+function googleLogin() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+}
+
+function logout() {
+  auth.signOut();
+}
+
+function postNote() {
+  const text = noteInput.value;
+  if (!text) return;
+
+  db.collection("notes").add({
+    text,
+    uid: auth.currentUser.uid,
+    time: Date.now()
+  });
+
+  noteInput.value = "";
+}
+
+function loadNotes() {
+  db.collection("notes").orderBy("time","desc")
+    .onSnapshot(snapshot => {
+      feed.innerHTML = "";
+      snapshot.forEach(doc => {
+        const div = document.createElement("div");
+        div.className = "note";
+        div.textContent = doc.data().text;
+        feed.appendChild(div);
+      });
+    });
+}
 </script>
 
 </body>
