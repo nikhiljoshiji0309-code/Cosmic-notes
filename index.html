@@ -5,96 +5,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cosmic Notes</title>
 
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-
 <style>
 body {
   margin: 0;
-  font-family: system-ui;
+  font-family: system-ui, sans-serif;
   background: #000;
   color: #fff;
 }
-.app { max-width: 420px; margin: auto; min-height: 100vh; }
-.center { text-align: center; padding: 15px; }
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
+}
+h1 { text-align: center; }
 input, button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   margin-top: 10px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
+  font-size: 16px;
 }
-button { background: #6c63ff; color: white; }
+input { background: #fff; }
+button {
+  background: #7b5cff;
+  color: white;
+  cursor: pointer;
+}
+.google {
+  background: #db4437;
+}
 .note {
   background: #111;
-  margin: 10px;
   padding: 12px;
   border-radius: 12px;
+  margin-top: 10px;
 }
-.topbar {
+.top {
   display: flex;
   justify-content: space-between;
-  padding: 12px;
-  border-bottom: 1px solid #222;
+  align-items: center;
 }
-img { border-radius: 50%; }
-.nav button { width: 48%; }
+.hidden { display: none; }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="login" class="app center">
-  <h2>🌌 Cosmic Notes</h2>
-  <input id="email" placeholder="Email">
+<!-- LOGIN SCREEN -->
+<div id="login" class="container">
+  <h1>🌌 Cosmic Notes</h1>
+  <input id="email" type="email" placeholder="Email">
   <input id="password" type="password" placeholder="Password">
   <button onclick="emailLogin()">Login / Signup</button>
-  <button onclick="googleLogin()" style="background:#db4437">Google Login</button>
+  <button class="google" onclick="googleLogin()">Google Login</button>
 </div>
 
-<!-- APP -->
-<div id="app" class="app" style="display:none;">
+<!-- APP SCREEN -->
+<div id="app" class="container hidden">
 
-  <div class="topbar">
-    <span id="title">🌌 Cosmic Notes</span>
+  <div class="top">
+    <h3>Feed</h3>
     <button onclick="logout()" style="width:auto;">Logout</button>
   </div>
 
-  <!-- FEED -->
+  <input id="noteText" placeholder="Write a cosmic note...">
+  <button onclick="postNote()">Post</button>
+
   <div id="feed"></div>
-
-  <!-- PROFILE -->
-  <div id="profile" class="center" style="display:none;">
-    <img id="profilePic" width="120"><br>
-    <input type="file" id="avatar" accept="image/*">
-    <button onclick="uploadAvatar()">Upload Photo</button>
-    <p id="userEmail"></p>
-    <h3>My Notes</h3>
-    <div id="myNotes"></div>
-  </div>
-
-  <!-- POST -->
-  <div id="postBox" class="center">
-    <input id="noteInput" placeholder="Write something cosmic...">
-    <button onclick="postNote()">Post</button>
-  </div>
-
-  <!-- NAV -->
-  <div class="center nav">
-    <button onclick="showFeed()">🏠 Feed</button>
-    <button onclick="showProfile()">👤 Profile</button>
-  </div>
 
 </div>
 
-<!-- FIREBASE -->
+<!-- FIREBASE SDKs -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
+/* 🔥 YOUR FIREBASE CONFIG */
 var firebaseConfig = {
   apiKey: "AIzaSyAxbBOThZxG5W_R1i0zVmh-TxzWOE1uDhM",
   authDomain: "cosmic-notes-f7648.firebaseapp.com",
@@ -108,109 +96,78 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-const loginDiv = document.getElementById("login");
-const appDiv = document.getElementById("app");
-const feed = document.getElementById("feed");
-
+/* AUTH STATE */
 auth.onAuthStateChanged(user => {
   if (user) {
-    loginDiv.style.display = "none";
-    appDiv.style.display = "block";
-    loadFeed();
-    loadProfile();
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    loadNotes();
   } else {
-    loginDiv.style.display = "block";
-    appDiv.style.display = "none";
+    document.getElementById("login").classList.remove("hidden");
+    document.getElementById("app").classList.add("hidden");
   }
 });
 
+/* EMAIL LOGIN / SIGNUP */
 function emailLogin() {
-  auth.signInWithEmailAndPassword(email.value, password.value)
-    .catch(() => auth.createUserWithEmailAndPassword(email.value, password.value));
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(() => {
+      auth.createUserWithEmailAndPassword(email, password)
+        .catch(err => alert(err.message));
+    });
 }
 
+/* GOOGLE LOGIN */
 function googleLogin() {
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  auth.signInWithPopup(provider)
+    .then(result => {
+      console.log("Logged in:", result.user.email);
+    })
+    .catch(error => {
+      alert(error.code + "\n" + error.message);
+      console.error(error);
+    });
 }
 
-function logout() { auth.signOut(); }
+/* LOGOUT */
+function logout() {
+  auth.signOut();
+}
 
+/* POST NOTE */
 function postNote() {
-  if (!noteInput.value) return;
+  const text = document.getElementById("noteText").value;
+  if (!text) return;
+
   db.collection("notes").add({
-    text: noteInput.value,
+    text: text,
     uid: auth.currentUser.uid,
     time: Date.now()
   });
-  noteInput.value = "";
+
+  document.getElementById("noteText").value = "";
 }
 
-function loadFeed() {
-  db.collection("notes").orderBy("time","desc")
-    .onSnapshot(snap => {
+/* LOAD FEED */
+function loadNotes() {
+  db.collection("notes")
+    .orderBy("time", "desc")
+    .onSnapshot(snapshot => {
+      const feed = document.getElementById("feed");
       feed.innerHTML = "";
-      snap.forEach(doc => {
-        let d = document.createElement("div");
+      snapshot.forEach(doc => {
+        const d = document.createElement("div");
         d.className = "note";
         d.innerText = doc.data().text;
         feed.appendChild(d);
       });
     });
-}
-
-function showProfile() {
-  title.innerText = "👤 Profile";
-  feed.style.display = "none";
-  postBox.style.display = "none";
-  profile.style.display = "block";
-}
-
-function showFeed() {
-  title.innerText = "🌌 Cosmic Notes";
-  feed.style.display = "block";
-  postBox.style.display = "block";
-  profile.style.display = "none";
-}
-
-function loadProfile() {
-  userEmail.innerText = auth.currentUser.email;
-  db.collection("notes")
-    .where("uid","==",auth.currentUser.uid)
-    .orderBy("time","desc")
-    .onSnapshot(snap => {
-      myNotes.innerHTML = "";
-      snap.forEach(doc => {
-        let d = document.createElement("div");
-        d.className = "note";
-        d.innerText = doc.data().text;
-        myNotes.appendChild(d);
-      });
-    });
-
-  db.collection("users").doc(auth.currentUser.uid).get()
-    .then(doc => {
-      if (doc.exists && doc.data().photo) {
-        profilePic.src = doc.data().photo;
-      }
-    });
-}
-
-function uploadAvatar() {
-  let file = avatar.files[0];
-  if (!file) return;
-
-  let ref = storage.ref("avatars/" + auth.currentUser.uid);
-  ref.put(file).then(() => {
-    ref.getDownloadURL().then(url => {
-      profilePic.src = url;
-      db.collection("users").doc(auth.currentUser.uid).set({
-        email: auth.currentUser.email,
-        photo: url
-      });
-    });
-  });
 }
 </script>
 
