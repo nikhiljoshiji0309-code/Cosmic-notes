@@ -6,7 +6,6 @@
 <title>Cosmic Notes</title>
 
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000">
 <link rel="icon" href="icon-192.png">
 
 <style>
@@ -17,101 +16,90 @@ body {
   color: #fff;
 }
 .app { max-width: 420px; margin: auto; min-height: 100vh; }
-.center { text-align: center; padding: 20px; }
-input {
+.center { text-align: center; padding: 15px; }
+input, button {
   width: 100%;
   padding: 12px;
   margin-top: 10px;
   border-radius: 10px;
   border: none;
 }
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: none;
-  background: #6c63ff;
-  color: #fff;
-  cursor: pointer;
-}
+button { background: #6c63ff; color: white; }
 .note {
   background: #111;
+  margin: 10px;
   padding: 12px;
   border-radius: 12px;
-  margin: 10px;
-}
-.note .user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 5px;
-}
-.note .user img {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-.note .user span {
-  cursor: pointer;
-  font-weight: bold;
 }
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 12px;
   border-bottom: 1px solid #222;
 }
-.topbar button {
-  width: auto;
-  margin-left: 5px;
-}
+img { border-radius: 50%; }
+.nav button { width: 48%; }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="login" class="app center">
   <h2>🌌 Cosmic Notes</h2>
-
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Password">
-  <input id="displayName" placeholder="Your Name">
-  
   <button onclick="emailLogin()">Login / Signup</button>
-  <button onclick="googleLogin()" style="background:#db4437">Continue with Google</button>
+  <button onclick="googleLogin()" style="background:#db4437">Google Login</button>
 </div>
 
-<!-- APP SCREEN -->
+<!-- APP -->
 <div id="app" class="app" style="display:none;">
+
   <div class="topbar">
-    <span>🌌 Cosmic Notes</span>
-    <div>
-      <button onclick="goToProfile(auth.currentUser.uid)">My Profile</button>
-      <button onclick="logout()">Logout</button>
-    </div>
+    <span id="title">🌌 Cosmic Notes</span>
+    <button onclick="logout()" style="width:auto;">Logout</button>
   </div>
 
+  <!-- FEED -->
   <div id="feed"></div>
 
-  <div class="center">
+  <!-- PROFILE -->
+  <div id="profile" class="center" style="display:none;">
+    <img id="profilePic" width="120"><br>
+    <input type="file" id="avatar" accept="image/*">
+    <button onclick="uploadAvatar()">Upload Photo</button>
+    <p id="userEmail"></p>
+    <h3>My Notes</h3>
+    <div id="myNotes"></div>
+  </div>
+
+  <!-- POST -->
+  <div id="postBox" class="center">
     <input id="noteInput" placeholder="Write something cosmic...">
     <button onclick="postNote()">Post</button>
   </div>
+
+  <!-- NAV -->
+  <div class="center nav">
+    <button onclick="showFeed()">🏠 Feed</button>
+    <button onclick="showProfile()">👤 Profile</button>
+  </div>
+
 </div>
 
-<!-- Firebase -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
 var firebaseConfig = {
   apiKey: "AIzaSyAxbBOThZxG5W_R1i0zVmh-TxzWOE1uDhM",
   authDomain: "cosmic-notes-f7648.firebaseapp.com",
   projectId: "cosmic-notes-f7648",
+  storageBucket: "cosmic-notes-f7648.appspot.com",
   messagingSenderId: "70656136344",
   appId: "1:70656136344:web:640193b83f63cac569aced"
 };
@@ -120,6 +108,7 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 const loginDiv = document.getElementById("login");
 const appDiv = document.getElementById("app");
@@ -127,18 +116,10 @@ const feed = document.getElementById("feed");
 
 auth.onAuthStateChanged(user => {
   if (user) {
-    // Save user info in Firestore
-    if (!user.displayName) user.updateProfile({ displayName: document.getElementById('displayName').value || 'Cosmic User' });
-    
-    db.collection("users").doc(user.uid).set({
-      displayName: user.displayName || document.getElementById('displayName').value || 'Cosmic User',
-      photoURL: user.photoURL || "https://i.pravatar.cc/150?img=3",
-      bio: "Hello! I'm cosmic.",
-    }, { merge: true });
-
     loginDiv.style.display = "none";
     appDiv.style.display = "block";
-    loadNotes();
+    loadFeed();
+    loadProfile();
   } else {
     loginDiv.style.display = "block";
     appDiv.style.display = "none";
@@ -146,66 +127,92 @@ auth.onAuthStateChanged(user => {
 });
 
 function emailLogin() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const displayName = document.getElementById('displayName').value || 'Cosmic User';
+  auth.signInWithEmailAndPassword(email.value, password.value)
+    .catch(() => auth.createUserWithEmailAndPassword(email.value, password.value));
+}
 
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(() => {
-      auth.createUserWithEmailAndPassword(email, password).then(cred => {
-        cred.user.updateProfile({ displayName });
+function googleLogin() {
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+}
+
+function logout() { auth.signOut(); }
+
+function postNote() {
+  if (!noteInput.value) return;
+  db.collection("notes").add({
+    text: noteInput.value,
+    uid: auth.currentUser.uid,
+    time: Date.now()
+  });
+  noteInput.value = "";
+}
+
+function loadFeed() {
+  db.collection("notes").orderBy("time","desc")
+    .onSnapshot(snap => {
+      feed.innerHTML = "";
+      snap.forEach(doc => {
+        let d = document.createElement("div");
+        d.className = "note";
+        d.innerText = doc.data().text;
+        feed.appendChild(d);
       });
     });
 }
 
-function googleLogin() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
+function showProfile() {
+  title.innerText = "👤 Profile";
+  feed.style.display = "none";
+  postBox.style.display = "none";
+  profile.style.display = "block";
 }
 
-function logout() {
-  auth.signOut();
+function showFeed() {
+  title.innerText = "🌌 Cosmic Notes";
+  feed.style.display = "block";
+  postBox.style.display = "block";
+  profile.style.display = "none";
 }
 
-function postNote() {
-  const text = document.getElementById('noteInput').value;
-  if (!text) return;
+function loadProfile() {
+  userEmail.innerText = auth.currentUser.email;
+  db.collection("notes")
+    .where("uid","==",auth.currentUser.uid)
+    .orderBy("time","desc")
+    .onSnapshot(snap => {
+      myNotes.innerHTML = "";
+      snap.forEach(doc => {
+        let d = document.createElement("div");
+        d.className = "note";
+        d.innerText = doc.data().text;
+        myNotes.appendChild(d);
+      });
+    });
 
-  db.collection("notes").add({
-    text,
-    uid: auth.currentUser.uid,
-    time: Date.now()
-  });
-
-  document.getElementById('noteInput').value = "";
-}
-
-async function loadNotes() {
-  db.collection("notes").orderBy("time","desc")
-    .onSnapshot(async snapshot => {
-      feed.innerHTML = "";
-      for (let doc of snapshot.docs) {
-        const data = doc.data();
-        const userDoc = await db.collection("users").doc(data.uid).get();
-        const userData = userDoc.data();
-
-        const div = document.createElement("div");
-        div.className = "note";
-        div.innerHTML = `
-          <div class="user">
-            <img src="${userData.photoURL}" alt="avatar">
-            <span onclick="goToProfile('${data.uid}')">${userData.displayName}</span>
-          </div>
-          <div>${data.text}</div>
-        `;
-        feed.appendChild(div);
+  db.collection("users").doc(auth.currentUser.uid).get()
+    .then(doc => {
+      if (doc.exists && doc.data().photo) {
+        profilePic.src = doc.data().photo;
       }
     });
 }
 
-function goToProfile(uid) {
-  window.location.href = uid === auth.currentUser.uid ? "myprofile.html" : `profile.html?uid=${uid}`;
+function uploadAvatar() {
+  let file = avatar.files[0];
+  if (!file) return;
+
+  let ref = storage.ref("avatars/" + auth.currentUser.uid);
+  ref.put(file).then(() => {
+    ref.getDownloadURL().then(url => {
+      profilePic.src = url;
+      db.collection("users").doc(auth.currentUser.uid).set({
+        email: auth.currentUser.email,
+        photo: url
+      });
+    });
+  });
 }
 </script>
+
 </body>
 </html>
